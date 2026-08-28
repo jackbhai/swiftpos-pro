@@ -509,3 +509,20 @@
 418. Every new module is fully offline-capable
 419. Every new module respects the shop-type terminology (Product → Medicine / Dish / Service)
 420. Every new module is mobile-first and works on the same AMOLED theme
+
+---
+
+# v10.1 — bill sharing as text or image (421–432)
+
+421. **Two WhatsApp options on every bill**: send as *text* or send as *image*
+422. Bill rendered to a real **PNG image** from any of the 20+ templates (thermal 58/80 mm or A4)
+423. **Download bill as image** button — saves `INVOICE-NO.png`
+424. Native **Web Share** on mobile: the image goes straight into the WhatsApp chat
+425. Desktop fallback: image auto-downloads and the WhatsApp chat opens, ready for a drag-and-drop
+426. **Share sheet** on every past invoice in Sales history (text, image, save, preview, SMS, any app)
+427. Optional phone number field — leave blank to pick the chat manually
+428. **Image preview** before sending, so you see exactly what the customer gets
+429. Template picker inside the share sheet (send a thermal slip or a full A4 invoice)
+430. Receipt CSS is scoped while rasterising, so the app's theme never flickers
+431. Retina-quality output (2× pixel ratio) with white background for readability
+432. Automatic monospace-canvas fallback if a browser blocks HTML rasterisation — an image is always produced

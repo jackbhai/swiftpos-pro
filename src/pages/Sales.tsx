@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Download, Printer, RotateCcw, Search, Eye, MessageCircle, Trash2 } from 'lucide-react';
 import { useSales } from '@/hooks/useData';
 import { VirtualList } from '@/components/ui/Virtual';
+import ShareBillModal from '@/components/pos/ShareBillModal';
 import { db } from '@/db/db';
 import { money, moneyShort, dt, rangeFor, cx, num } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
@@ -22,6 +23,7 @@ export default function SalesPage() {
   const [view, setView] = useState<Sale | null>(null);
   const [refund, setRefund] = useState<Sale | null>(null);
   const [limit, setLimit] = useState(40);
+  const [share, setShare] = useState<Sale | null>(null);
 
   const [from, to] = rangeFor(period as any);
   const list = useMemo(() => sales.filter((x: Sale) => {
@@ -89,7 +91,7 @@ export default function SalesPage() {
                 <div className="flex gap-1">
                   <button className="btn-ghost px-2 py-1.5" onClick={() => setView(x)}><Eye size={14} /></button>
                   <button className="btn-ghost px-2 py-1.5" onClick={() => printHTML(receiptHTML(x, s, '80mm'))}><Printer size={14} /></button>
-                  <button className="btn-ghost px-2 py-1.5" onClick={() => window.open(waLink('', saleText(x, s)), '_blank')}><MessageCircle size={14} /></button>
+                  <button className="btn-ghost px-2 py-1.5" onClick={() => setShare(x)} title="Share / WhatsApp"><MessageCircle size={14} /></button>
                   <button className="btn-ghost px-2 py-1.5" onClick={() => setRefund(x)} disabled={x.status !== 'completed'}><RotateCcw size={14} /></button>
                 </div>
               </div>
@@ -97,6 +99,8 @@ export default function SalesPage() {
           />
         </Card>
       )}
+
+      <ShareBillModal sale={share} onClose={() => setShare(null)} />
 
       <Modal open={!!view} onClose={() => setView(null)} title={view?.invoiceNo} wide
         footer={view && <div className="flex gap-2">

@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v10
+# ⚡ SwiftPOS Pro v10.1
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -45,8 +45,9 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | 🧾 **Tax centre** | GSTR-1 summary, B2B/B2C registers, HSN table, JSON export |
 | 🩺 **Data doctor** | 12 catalogue health checks with one-click, undoable auto-fixes |
 | 🧵 **Worker analytics** | ABC, basket affinity & velocity computed off the main thread |
+| 📤 **Bill sharing** | WhatsApp as **text or image**, plus download the bill as a PNG |
 
-Full list: [FEATURES.md](./FEATURES.md) — **420+ features**.
+Full list: [FEATURES.md](./FEATURES.md) — **432+ features**.
 
 ---
 
