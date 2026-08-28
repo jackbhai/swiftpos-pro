@@ -8,17 +8,18 @@ import {
   IndianRupee, TrendingUp, ShoppingBag, Users, AlertTriangle, PackageX, CalendarClock,
   Percent, ArrowUpRight, ArrowDownRight, Zap,
 } from 'lucide-react';
-import { useSales, useProducts, useCustomers, useExpenses } from '@/hooks/useData';
+import { useSales, useCustomers, useExpenses } from '@/hooks/useData';
 import { money, moneyShort, num, dayKey, rangeFor, ago, cx } from '@/lib/format';
 import { stockState, expiryState } from '@/lib/calc';
 import { Card, Stat, SectionTitle, Tabs, Badge, Empty } from '@/components/ui';
+import { useCatalog } from '@/hooks/useCatalog';
 import { useSettings } from '@/store/settings';
 
 const PIE = ['#00e5ff', '#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#a3e635'];
 
 export default function Dashboard() {
   const sales = useSales() || [];
-  const products = useProducts() || [];
+  const { products } = useCatalog();
   const customers = useCustomers() || [];
   const expenses = useExpenses() || [];
   const s = useSettings();

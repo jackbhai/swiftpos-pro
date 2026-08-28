@@ -241,3 +241,90 @@
 210. **Barcode & price label printing** page — Code128 generator, 3 label sizes, 1–6 columns, quantity per item, live sheet preview
 211. Per-bill extra charges (service %, packaging, delivery, tip) with quick presets
 212. Charges flow into totals, receipts, profit maths and reports
+
+---
+
+# v8 — "100x" performance & operations release (213–268)
+
+## Performance engine
+213. **Virtualised rendering** everywhere heavy — only visible rows are mounted (`VirtualList`), so a 27,000-item catalogue scrolls at 60 fps
+214. Windowed **grid mode** too (responsive column count computed from viewport width)
+215. **Indexed search cache** (`useCatalog`) — one shared, memoised index keyed by `count:maxUpdatedAt`, reused by every page
+216. Pre-computed lowercase search keys per product (name + sku + barcode + brand + category)
+217. **Ranked fuzzy search** — exact barcode > prefix > word-start > substring > subsequence scoring
+218. **Debounced input** (140–160 ms) so typing never blocks the main thread
+219. Result capping with early exit — search stops scanning once enough high-quality hits are found
+220. `debounce`, `throttle`, `idle`, `chunkedForEach` utilities in a shared `perf` module
+221. Header alert badge switched to an **indexed count query** instead of loading the whole catalogue
+222. Every page moved off "load all products into React" — 8 screens converted
+223. Memoised `ProductCard` / `ProductRow` components (no re-render on unrelated state changes)
+224. Route-level code splitting for all 22 screens; charts split into their own chunk
+
+## Offline & PWA
+225. **Service worker** with offline-first caching (app shell + assets + catalogue JSON)
+226. Network-first for navigations, cache-first with background refresh for assets
+227. **Install app** button in the header (real `beforeinstallprompt` handling)
+228. **Update available** button — new version detected, one tap to activate and reload
+229. Automatic update check every 30 minutes
+230. Works fully offline: billing, inventory, reports, printing all run without internet
+231. Scoped registration that works on GitHub Pages sub-paths
+
+## Reliability
+232. **Error boundary** — crash screen instead of a white page, with Reload and Download-backup buttons
+233. Local-storage-backed count sheet so a stock take survives a refresh
+234. Hardware **barcode-scanner detection** (keystroke burst buffer) — works with any USB/BT scanner, no drivers
+235. **Hindi/Hinglish i18n layer** with a `t()` helper and dictionary
+
+## Returns & exchange desk (new module)
+236. Search any bill by invoice no, customer or amount
+237. **Line-level returns** — choose exactly which items and how many come back
+238. Live refund total as you select
+239. Optional **restock** with full stock-log audit trail
+240. Refund via cash, UPI, **credit note**, or exchange
+241. Reason codes (damaged, wrong item, expired, price dispute…)
+242. Automatic **partial-refund vs full-refund** bill status
+243. Credit notes reduce customer dues automatically
+244. Credit-note document saved for reprint
+245. Return-rate KPI and refund-value KPI
+
+## Quotes & estimates (new module)
+246. Build quotations with live product search
+247. Editable qty and rate per line, running total, amount in words
+248. Validity date, customer link, terms/notes
+249. Printable A4 estimate/proforma document
+250. **One-tap WhatsApp share** of the full quote
+251. **Convert to bill** — loads straight into the POS cart
+252. Open / converted / expired pipeline with win-rate KPI
+
+## Day close · Z-report (new module)
+253. Full end-of-day report: bills, items, gross, refunds, discounts, tax, net, profit, expenses
+254. **Denomination-wise cash counter** (₹500 → ₹1) with live totals
+255. Expected vs counted drawer with **short / excess variance** indicator
+256. Payment-mode mix with share bars (splits decomposed correctly)
+257. Hourly sales sparkline with peak-hour callout
+258. Staff performance and top sellers for the day
+259. Printable Z-report with signature lines + CSV export
+
+## Stock take / audit (new module)
+260. Count sheet over the whole catalogue with search, category filter and "counted only" view
+261. Live **difference and shrink value** as you type counts
+262. Adjustment preview before anything is written
+263. **Bulk post** adjustments with stock-log entries and a single audit reference
+264. Downloadable printed count sheet (CSV)
+
+## Bulk inventory editing
+265. Multi-select rows with select-all
+266. **12 bulk operations**: price ±%, set price, price from cost+margin, cost ±%, GST, low-stock level, add/set stock, change category, activate, deactivate, favourite
+267. Bulk delete with count confirmation
+
+## Bulk WhatsApp reminders (new module)
+268. Segments: dues, win-back (lapsed), birthdays (7-day look-ahead), VIPs, everyone
+269. Token-based message templates ({name} {shop} {due} {points} {spend} {last})
+270. Batch send (10 chats at a time), copy-all, and CSV export
+
+## Advanced analytics (Reports+)
+271. **ABC / Pareto classification** of every product by revenue contribution (A/B/C + zero-sale count)
+272. **Demand mix** — revenue by day of week, product mix donut, hour-of-day demand
+273. **Basket affinity** — frequently-bought-together pairs for combos and shelf placement
+274. **Forecast** — 7-day moving average, week-on-week growth, 30-day projection
+275. **Reorder plan** — daily velocity, days-of-cover and suggested order quantity, exportable

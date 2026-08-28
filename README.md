@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v7.1
+# ⚡ SwiftPOS Pro v8
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -25,8 +25,16 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | ⚙️ **16 settings tabs** | Store, billing, charges, payments, templates, printing, POS, inventory, loyalty, messaging, security, JSON, appearance, backup |
 | 🏷️ **Label printing** | Code128 barcode + price shelf tags, 3 sizes, 1–6 columns |
 | 🔒 **App lock** | PIN keypad with idle auto-lock, cashier discount caps, hide-cost mode |
+| 🚀 **v8 performance engine** | Virtualised lists, shared indexed catalogue cache, ranked fuzzy search, debounced input — 27k products scroll at 60 fps |
+| 📴 **True PWA** | Service worker, install prompt, in-app update button, works fully offline |
+| ↩️ **Returns desk** | Line-level refunds, restock, credit notes, reason codes |
+| 🧮 **Day close (Z-report)** | Denomination cash count, variance, payment mix, printable Z-report |
+| 📋 **Stock take** | Count sheet, live shrink value, bulk-post adjustments with audit trail |
+| 📝 **Quotes / estimates** | Build, print, WhatsApp, convert to bill in one tap |
+| 💬 **Bulk reminders** | Dues, win-back, birthday and VIP WhatsApp campaigns |
+| 🧠 **Reports+** | ABC/Pareto, demand mix, basket affinity, forecast & reorder plan |
 
-Full list: [FEATURES.md](./FEATURES.md) — **212 features**.
+Full list: [FEATURES.md](./FEATURES.md) — **275+ features**.
 
 ---
 

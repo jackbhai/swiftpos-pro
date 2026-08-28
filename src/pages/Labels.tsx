@@ -1,7 +1,8 @@
+import { useCatalog } from '@/hooks/useCatalog';
 import { useMemo, useState } from 'react';
 import { Printer, Tag, Search, Plus, Minus, Trash2 } from 'lucide-react';
 import { Card, SectionTitle, Field, Input, Select, Empty, SearchBar, Toggle } from '@/components/ui';
-import { useProducts } from '@/hooks/useData';
+
 import { useSettings, useShop } from '@/store/settings';
 import { code128SVG } from '@/lib/barcode';
 import { printHTML } from '@/lib/receipt';
@@ -10,7 +11,7 @@ import { toast } from '@/store/ui';
 import type { Product } from '@/db/types';
 
 export default function Labels() {
-  const products = useProducts() || [];
+  const { products } = useCatalog();
   const s = useSettings();
   const { terms } = useShop();
   const [q, setQ] = useState('');

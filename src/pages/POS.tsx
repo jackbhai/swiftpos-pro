@@ -3,7 +3,9 @@ import {
   ScanLine, Trash2, Plus, Minus, User, Tag, Pause, Play, Percent, StickyNote,
   ShoppingCart, X, Grid3x3, List, Star, ChevronDown, Utensils, Truck, Store, Globe,
 } from 'lucide-react';
-import { useProducts, useHolds, useCoupons, useCustomers } from '@/hooks/useData';
+import { useHolds, useCoupons, useCustomers } from '@/hooks/useData';
+import { useCatalog, useDebounced, searchProducts } from '@/hooks/useCatalog';
+import { VirtualList } from '@/components/ui/Virtual';
 import { useCart } from '@/store/cart';
 import { useSettings, useShop } from '@/store/settings';
 import { useSession } from '@/store/session';
@@ -15,7 +17,7 @@ import { toast, useUI } from '@/store/ui';
 import { clickSound, successSound, errorSound, buzz } from '@/lib/sound';
 import { useHotkeys } from '@/hooks/useKeys';
 import { Modal, Field, Input, Empty, SearchBar, Badge, Select, Textarea } from '@/components/ui';
-import ProductGrid from '@/components/pos/ProductGrid';
+import ProductGrid, { ProductCard, ProductRow } from '@/components/pos/ProductGrid';
 import PaymentModal from '@/components/pos/PaymentModal';
 import ReceiptModal from '@/components/pos/ReceiptModal';
 import CustomerPicker from '@/components/pos/CustomerPicker';
@@ -30,7 +32,7 @@ const CHANNELS = [
 ] as const;
 
 export default function POS() {
-  const products = useProducts() || [];
+  const { products, loading: catLoading } = useCatalog();
   const holds = useHolds() || [];
   const coupons = useCoupons() || [];
   const customers = useCustomers() || [];
@@ -53,11 +55,11 @@ export default function POS() {
   const [chargeOpen, setChargeOpen] = useState(false);
   const [lineEdit, setLineEdit] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Sale | null>(null);
-  const [limit, setLimit] = useState(60);
   const searchRef = useRef<HTMLInputElement>(null);
+  const dq = useDebounced(q, 140);
+  const scanBuf = useRef({ text: '', t: 0 });
 
   useEffect(() => setLayout(s.posLayout), [s.posLayout]);
-  useEffect(() => setLimit(60), [q, cat, favOnly]);
 
   const categories = useMemo(() => {
     const m = new Map<string, number>();
@@ -66,21 +68,16 @@ export default function POS() {
   }, [products]);
 
   const filtered = useMemo(() => {
-    let list = products.filter((p: Product) => p.active);
-    if (favOnly) list = list.filter((p: Product) => p.favorite);
-    if (cat !== 'All') list = list.filter((p: Product) => p.category === cat);
-    if (q.trim()) {
-      const scored = list.map((p: Product) => ({
-        p, s: Math.max(fuzzyScore(q, p.name), fuzzyScore(q, p.sku) * 0.9,
-          p.barcode ? fuzzyScore(q, p.barcode) : 0, p.brand ? fuzzyScore(q, p.brand) * 0.7 : 0),
-      })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
-      list = scored.map((x) => x.p);
-    } else if (session.recentProductIds.length) {
+    let list = products.filter((p) => p.active);
+    if (favOnly) list = list.filter((p) => p.favorite);
+    if (cat !== 'All') list = list.filter((p) => p.category === cat);
+    if (dq.trim()) return searchProducts(list as any, dq, 400) as any[];
+    if (session.recentProductIds.length) {
       const rank = new Map(session.recentProductIds.map((id, i) => [id, i]));
-      list = [...list].sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999));
+      list = [...list].sort((a, b) => (rank.get(a.id) ?? 9999) - (rank.get(b.id) ?? 9999));
     }
     return list;
-  }, [products, q, cat, favOnly, session.recentProductIds]);
+  }, [products, dq, cat, favOnly, session.recentProductIds]);
 
   const totals = computeTotals(cart.lines, {
     billDiscount: cart.billDiscount, billDiscountType: cart.billDiscountType,
@@ -93,6 +90,14 @@ export default function POS() {
   });
 
   const customer = customers.find((c: any) => c.id === cart.customerId);
+
+  const [vw, setVw] = useState(typeof window === 'undefined' ? 1200 : window.innerWidth);
+  useEffect(() => {
+    const onR = () => setVw(window.innerWidth);
+    window.addEventListener('resize', onR);
+    return () => window.removeEventListener('resize', onR);
+  }, []);
+  const cols = vw >= 1536 ? 5 : vw >= 1280 ? 4 : vw >= 768 ? 4 : s.gridCols;
 
   const addProduct = (p: Product) => {
     if (!s.negativeStock && p.trackStock && p.stock <= 0) { errorSound(); return toast(`${p.name} is out of stock`, 'err'); }
@@ -117,6 +122,25 @@ export default function POS() {
       if (s.autoPrint) setTimeout(() => document.getElementById('auto-print-trigger')?.click(), 100);
     } catch (e: any) { errorSound(); toast(e.message ?? 'Payment failed', 'err'); }
   };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement;
+      const typingInSearch = el === searchRef.current;
+      if (el && ['INPUT', 'TEXTAREA'].includes(el.tagName) && !typingInSearch) return;
+      const now = Date.now();
+      const b = scanBuf.current;
+      if (now - b.t > 90) b.text = '';
+      b.t = now;
+      if (e.key === 'Enter') {
+        if (b.text.length >= 6) { onScan(b.text); b.text = ''; e.preventDefault(); }
+        return;
+      }
+      if (e.key.length === 1) b.text += e.key;
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [products]);
 
   useHotkeys({
     'mod+enter': (e) => { e.preventDefault(); cart.lines.length && setPayOpen(true); },
@@ -231,17 +255,21 @@ export default function POS() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {catLoading ? (
+          <div className="grid h-64 place-items-center text-ink3">Loading catalogue…</div>
+        ) : filtered.length === 0 ? (
           <Empty title={`No ${terms.products.toLowerCase()} found`} sub="Try another search, or import your catalogue from Settings → JSON Data." />
         ) : (
           <>
-            <ProductGrid products={filtered.slice(0, limit)} onPick={addProduct} layout={layout}
-              cols={typeof window !== 'undefined' && window.innerWidth > 1024 ? 5 : s.gridCols} />
-            {filtered.length > limit && (
-              <button className="btn-ghost w-full" onClick={() => setLimit((l) => l + 120)}>
-                <ChevronDown size={15} /> Show more ({filtered.length - limit} remaining)
-              </button>
-            )}
+            <p className="text-[11px] text-ink3">{filtered.length.toLocaleString('en-IN')} {terms.products.toLowerCase()} · virtualised for speed</p>
+            <VirtualList
+              items={filtered}
+              columns={layout === 'list' ? 1 : cols}
+              rowHeight={layout === 'list' ? 62 : 132}
+              gap={8}
+              height="calc(100dvh - 250px)"
+              render={(p: any) => (layout === 'list' ? <ProductRow p={p} onPick={addProduct} /> : <ProductCard p={p} onPick={addProduct} />)}
+            />
           </>
         )}
       </div>

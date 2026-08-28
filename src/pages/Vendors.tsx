@@ -1,6 +1,7 @@
+import { useCatalog } from '@/hooks/useCatalog';
 import { useState, useMemo } from 'react';
 import { Plus, Phone, Trash2, Pencil, Download, MessageCircle } from 'lucide-react';
-import { useVendors, useProducts, usePOs } from '@/hooks/useData';
+import { useVendors, usePOs } from '@/hooks/useData';
 import { db, uid } from '@/db/db';
 import { money, moneyShort, num, initials } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
@@ -12,7 +13,7 @@ import type { Vendor } from '@/db/types';
 
 export default function Vendors() {
   const vendors = useVendors() || [];
-  const products = useProducts() || [];
+  const { products } = useCatalog();
   const pos = usePOs() || [];
   const s = useSettings();
   const { terms } = useShop();

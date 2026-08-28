@@ -1,6 +1,7 @@
+import { useCatalog } from '@/hooks/useCatalog';
 import { useMemo, useState } from 'react';
 import { Plus, Truck, Check, Trash2, Download, PackageCheck, X } from 'lucide-react';
-import { usePOs, useVendors, useProducts } from '@/hooks/useData';
+import { usePOs, useVendors } from '@/hooks/useData';
 import { db, uid, addStockLog, logActivity } from '@/db/db';
 import { money, moneyShort, num, dt } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
@@ -12,7 +13,7 @@ import type { POItem, PurchaseOrder } from '@/db/types';
 export default function Purchases() {
   const pos = usePOs() || [];
   const vendors = useVendors() || [];
-  const products = useProducts() || [];
+  const { products } = useCatalog();
   const s = useSettings();
   const { terms } = useShop();
   const [tab, setTab] = useState('all');

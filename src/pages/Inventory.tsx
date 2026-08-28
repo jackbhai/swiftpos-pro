@@ -4,7 +4,9 @@ import {
   AlertTriangle, CalendarClock, Boxes, Search, Grid3x3, List, ChevronDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useProducts, useVendors, useStockLogs } from '@/hooks/useData';
+import { useVendors, useStockLogs } from '@/hooks/useData';
+import { useCatalog, useDebounced, searchProducts } from '@/hooks/useCatalog';
+import { VirtualList } from '@/components/ui/Virtual';
 import { db, uid, addStockLog, logActivity } from '@/db/db';
 import { money, moneyShort, num, cx, dt } from '@/lib/format';
 import { stockState, expiryState, fuzzyScore } from '@/lib/calc';
@@ -22,7 +24,7 @@ const blank = (gst: number): Product => ({
 });
 
 export default function Inventory() {
-  const products = useProducts() || [];
+  const { products, loading } = useCatalog();
   const vendors = useVendors() || [];
   const logs = useStockLogs() || [];
   const s = useSettings();
@@ -38,6 +40,9 @@ export default function Inventory() {
   const [limit, setLimit] = useState(50);
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [logsOpen, setLogsOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const dq = useDebounced(q, 160);
 
   const categories = useMemo(() => ['All', ...new Set(products.map((p: Product) => p.category))].slice(0, 60), [products]);
 
@@ -49,10 +54,10 @@ export default function Inventory() {
     if (tab === 'fav') list = list.filter((p) => p.favorite);
     if (tab === 'inactive') list = list.filter((p) => !p.active);
     if (cat !== 'All') list = list.filter((p) => p.category === cat);
-    if (q.trim()) list = list.map((p) => ({ p, s: Math.max(fuzzyScore(q, p.name), fuzzyScore(q, p.sku), p.barcode ? fuzzyScore(q, p.barcode) : 0, p.brand ? fuzzyScore(q, p.brand) : 0) }))
-      .filter((x) => x.s > 0).sort((a, b) => b.s - a.s).map((x) => x.p);
+    if (dq.trim()) return searchProducts(list as any, dq, 600) as any[];
     const dir = asc ? 1 : -1;
-    if (!q.trim()) list.sort((a, b) => {
+    {
+      list.sort((a, b) => {
       switch (sort) {
         case 'stock': return (a.stock - b.stock) * dir;
         case 'price': return (a.price - b.price) * dir;
@@ -60,9 +65,10 @@ export default function Inventory() {
         case 'updated': return (a.updatedAt - b.updatedAt) * dir;
         default: return a.name.localeCompare(b.name) * dir;
       }
-    });
+      });
+    }
     return list;
-  }, [products, q, tab, cat, sort, asc, s.expiryAlertDays]);
+  }, [products, dq, tab, cat, sort, asc, s.expiryAlertDays]);
 
   const stockValue = products.reduce((t: number, p: Product) => t + p.cost * p.stock, 0);
   const retailValue = products.reduce((t: number, p: Product) => t + p.price * p.stock, 0);
@@ -122,72 +128,52 @@ export default function Inventory() {
         </div>
       </Card>
 
-      {filtered.length === 0 ? (
+      {loading ? <div className="grid h-64 place-items-center text-ink3">Indexing catalogue…</div>
+      : filtered.length === 0 ? (
         <Empty title={`No ${terms.products.toLowerCase()} match`} sub="Adjust filters or import a catalogue." action={<Link className="btn-primary mt-2" to="/settings?tab=json"><Upload size={15} /> Import JSON</Link>} />
-      ) : view === 'list' ? (
-        <Card pad={false}>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px]">
-              <thead className="border-b border-line"><tr>
-                <th className="th">{terms.product}</th><th className="th">Category</th><th className="th text-right">Cost</th>
-                <th className="th text-right">Price</th><th className="th text-right">Margin</th><th className="th text-right">{terms.stock}</th>
-                <th className="th text-right">Value</th><th className="th"></th>
-              </tr></thead>
-              <tbody className="divide-y divide-line">
-                {filtered.slice(0, limit).map((p) => {
-                  const st = stockState(p); const ex = expiryState(p, s.expiryAlertDays);
-                  const margin = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
-                  return (
-                    <tr key={p.id} className="hover:bg-surface2/50">
-                      <td className="td">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => db.products.update(p.id, { favorite: !p.favorite })}>
-                            <Star size={13} className={p.favorite ? 'fill-warn text-warn' : 'text-ink3'} />
-                          </button>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-ink">{p.name}</p>
-                            <p className="text-[11px] text-ink3">{p.sku}{p.brand ? ' · ' + p.brand : ''}{p.batch ? ' · B:' + p.batch : ''}</p>
-                          </div>
-                          {ex === 'expired' && <Badge tone="bad">expired</Badge>}
-                          {ex === 'soon' && <Badge tone="warn">expiring</Badge>}
-                        </div>
-                      </td>
-                      <td className="td text-xs">{p.category}</td>
-                      <td className="td text-right font-mono">{money(p.cost, s.currency)}</td>
-                      <td className="td text-right font-mono text-ink">{money(p.price, s.currency)}</td>
-                      <td className={cx('td text-right font-mono', margin < 10 ? 'text-bad' : margin < 25 ? 'text-warn' : 'text-ok')}>{margin.toFixed(0)}%</td>
-                      <td className="td text-right">
-                        <button onClick={() => setAdjust(p)} className={cx('font-mono font-bold', st === 'out' ? 'text-bad' : st === 'low' ? 'text-warn' : 'text-ink')}>{p.stock} {p.unit}</button>
-                      </td>
-                      <td className="td text-right font-mono">{moneyShort(p.stock * p.cost, s.currency)}</td>
-                      <td className="td">
-                        <div className="flex justify-end gap-1">
-                          <button className="rounded-lg p-1.5 text-ink3 hover:text-brand" onClick={() => setEdit(p)}><Pencil size={14} /></button>
-                          <button className="rounded-lg p-1.5 text-ink3 hover:text-bad" onClick={async () => { await db.products.delete(p.id); toast('Deleted'); }}><Trash2 size={14} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {filtered.slice(0, limit).map((p) => (
-            <button key={p.id} onClick={() => setEdit(p)} className="card card-hover p-3 text-left">
-              <p className="line-clamp-2 min-h-[34px] text-xs font-semibold text-ink">{p.name}</p>
-              <p className="mt-1 font-mono text-sm font-bold text-brand">{money(p.price, s.currency)}</p>
-              <p className={cx('text-[11px] font-bold', stockState(p) === 'out' ? 'text-bad' : stockState(p) === 'low' ? 'text-warn' : 'text-ink3')}>{p.stock} {p.unit} in stock</p>
-            </button>
-          ))}
-        </div>
+        <Card pad={false}>
+          <div className="flex flex-wrap items-center gap-2 border-b border-line p-2.5">
+            <label className="flex items-center gap-2 text-[11px] font-semibold text-ink2">
+              <input type="checkbox" className="h-4 w-4 accent-cyan-400"
+                checked={selected.size > 0 && selected.size >= Math.min(filtered.length, 500)}
+                onChange={(e) => setSelected(e.target.checked ? new Set(filtered.slice(0, 500).map((p) => p.id)) : new Set())} />
+              Select {filtered.length > 500 ? 'first 500' : 'all'}
+            </label>
+            <span className="text-[11px] text-ink3">{num(filtered.length)} shown · {selected.size} selected</span>
+            {selected.size > 0 && <>
+              <button className="btn-soft ml-auto px-2 py-1 text-xs" onClick={() => setBulkOpen(true)}><Pencil size={13} /> Bulk edit</button>
+              <button className="btn-ghost px-2 py-1 text-xs" onClick={async () => {
+                await db.products.bulkDelete([...selected]); toast(`${selected.size} deleted`); setSelected(new Set());
+              }}><Trash2 size={13} /> Delete</button>
+            </>}
+          </div>
+          <VirtualList
+            items={filtered}
+            rowHeight={view === 'list' ? 56 : 128}
+            columns={view === 'list' ? 1 : (typeof window !== 'undefined' && window.innerWidth > 1024 ? 5 : 2)}
+            gap={view === 'list' ? 0 : 8}
+            height="calc(100dvh - 330px)"
+            className={view === 'grid' ? 'p-2.5' : ''}
+            render={(p: any) => view === 'list' ? (
+              <InvRow p={p} currency={s.currency} expiryDays={s.expiryAlertDays} hideCost={s.hideCostPrices}
+                checked={selected.has(p.id)}
+                onCheck={(v) => setSelected((prev) => { const n = new Set(prev); v ? n.add(p.id) : n.delete(p.id); return n; })}
+                onEdit={() => setEdit(p)} onAdjust={() => setAdjust(p)}
+                onFav={() => db.products.update(p.id, { favorite: !p.favorite })}
+                onDelete={async () => { await db.products.delete(p.id); toast('Deleted'); }} />
+            ) : (
+              <button onClick={() => setEdit(p)} className="card card-hover h-full w-full p-3 text-left">
+                <p className="line-clamp-2 min-h-[34px] text-xs font-semibold text-ink">{p.name}</p>
+                <p className="mt-1 font-mono text-sm font-bold text-brand">{money(p.price, s.currency)}</p>
+                <p className={cx('text-[11px] font-bold', stockState(p) === 'out' ? 'text-bad' : stockState(p) === 'low' ? 'text-warn' : 'text-ink3')}>{p.stock} {p.unit}</p>
+              </button>
+            )}
+          />
+        </Card>
       )}
 
-      {filtered.length > limit && (
-        <button className="btn-ghost w-full" onClick={() => setLimit((l) => l + 100)}><ChevronDown size={15} /> Load more ({num(filtered.length - limit)} left)</button>
-      )}
+      <BulkEdit open={bulkOpen} onClose={() => setBulkOpen(false)} ids={[...selected]} onDone={() => { setSelected(new Set()); setBulkOpen(false); }} />
 
       <ProductEditor product={edit} onClose={() => setEdit(null)} onSave={save} vendors={vendors} modules={modules} terms={terms} />
       <AdjustModal product={adjust} onClose={() => setAdjust(null)} />
@@ -289,6 +275,92 @@ function AdjustModal({ product, onClose }: { product: Product | null; onClose: (
         <button className="btn-danger flex-1" onClick={() => apply(-1)}>− Remove</button>
         <button className="btn-primary flex-1" onClick={() => apply(1)}>+ Add</button>
       </div>
+    </Modal>
+  );
+}
+
+
+function InvRow({ p, currency, expiryDays, hideCost, checked, onCheck, onEdit, onAdjust, onFav, onDelete }: any) {
+  const st = stockState(p); const ex = expiryState(p, expiryDays);
+  const margin = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
+  return (
+    <div className="flex h-full items-center gap-2 border-b border-line px-3 hover:bg-surface2/50">
+      <input type="checkbox" className="h-4 w-4 shrink-0 accent-cyan-400" checked={checked} onChange={(e) => onCheck(e.target.checked)} />
+      <button onClick={onFav} className="shrink-0"><Star size={13} className={p.favorite ? 'fill-warn text-warn' : 'text-ink3'} /></button>
+      <button onClick={onEdit} className="min-w-0 flex-1 text-left">
+        <p className="truncate text-sm font-semibold text-ink">{p.name}</p>
+        <p className="truncate text-[11px] text-ink3">{p.sku}{p.brand ? ' · ' + p.brand : ''} · {p.category}{p.batch ? ' · B:' + p.batch : ''}</p>
+      </button>
+      {ex === 'expired' && <Badge tone="bad">expired</Badge>}
+      {ex === 'soon' && <Badge tone="warn">expiring</Badge>}
+      {!hideCost && <span className="hidden w-16 shrink-0 text-right font-mono text-xs text-ink3 lg:block">{money(p.cost, currency)}</span>}
+      <span className="w-20 shrink-0 text-right font-mono text-sm text-ink">{money(p.price, currency)}</span>
+      {!hideCost && <span className={cx('hidden w-12 shrink-0 text-right font-mono text-xs lg:block', margin < 10 ? 'text-bad' : margin < 25 ? 'text-warn' : 'text-ok')}>{margin.toFixed(0)}%</span>}
+      <button onClick={onAdjust} className={cx('w-20 shrink-0 text-right font-mono text-sm font-bold', st === 'out' ? 'text-bad' : st === 'low' ? 'text-warn' : 'text-ink')}>{p.stock} {p.unit}</button>
+      <button className="shrink-0 rounded-lg p-1.5 text-ink3 hover:text-brand" onClick={onEdit}><Pencil size={14} /></button>
+      <button className="shrink-0 rounded-lg p-1.5 text-ink3 hover:text-bad" onClick={onDelete}><Trash2 size={14} /></button>
+    </div>
+  );
+}
+
+function BulkEdit({ open, onClose, ids, onDone }: { open: boolean; onClose: () => void; ids: string[]; onDone: () => void }) {
+  const [op, setOp] = useState('price-pct');
+  const [val, setVal] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const apply = async () => {
+    const n = parseFloat(val);
+    if (op !== 'category' && op !== 'active-on' && op !== 'active-off' && op !== 'fav-on' && !Number.isFinite(n)) return toast('Enter a value', 'err');
+    setBusy(true);
+    const items = await db.products.bulkGet(ids);
+    const updates = items.filter(Boolean).map((p: any) => {
+      const u: any = { ...p, updatedAt: Date.now() };
+      switch (op) {
+        case 'price-pct': u.price = +(p.price * (1 + n / 100)).toFixed(2); break;
+        case 'price-set': u.price = n; break;
+        case 'margin': u.price = +(p.cost * (1 + n / 100)).toFixed(2); break;
+        case 'cost-pct': u.cost = +(p.cost * (1 + n / 100)).toFixed(2); break;
+        case 'gst': u.gst = n; break;
+        case 'low': u.lowStock = n; break;
+        case 'stock-add': u.stock = +(p.stock + n).toFixed(3); break;
+        case 'stock-set': u.stock = n; break;
+        case 'category': u.category = val || p.category; break;
+        case 'active-on': u.active = true; break;
+        case 'active-off': u.active = false; break;
+        case 'fav-on': u.favorite = true; break;
+      }
+      return u;
+    });
+    await db.products.bulkPut(updates);
+    await logActivity('bulk', `Bulk update (${op}) on ${updates.length} products`);
+    setBusy(false); toast(`${updates.length} products updated`); onDone();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Bulk edit · ${ids.length} items`}
+      footer={<button className="btn-primary w-full" disabled={busy} onClick={apply}>{busy ? 'Applying…' : 'Apply to ' + ids.length + ' items'}</button>}>
+      <Field label="Operation">
+        <Select value={op} onChange={(e) => setOp(e.target.value)}>
+          <option value="price-pct">Change price by %</option>
+          <option value="price-set">Set price to</option>
+          <option value="margin">Set price from cost + margin %</option>
+          <option value="cost-pct">Change cost by %</option>
+          <option value="gst">Set GST %</option>
+          <option value="low">Set low-stock level</option>
+          <option value="stock-add">Add to stock</option>
+          <option value="stock-set">Set stock to</option>
+          <option value="category">Change category</option>
+          <option value="active-on">Mark active</option>
+          <option value="active-off">Mark inactive</option>
+          <option value="fav-on">Mark favourite</option>
+        </Select>
+      </Field>
+      {!['active-on', 'active-off', 'fav-on'].includes(op) && (
+        <Field label="Value" className="mt-3"><Input value={val} onChange={(e) => setVal(e.target.value)} placeholder={op === 'category' ? 'New category' : 'e.g. 10'} autoFocus /></Field>
+      )}
+      <p className="mt-3 rounded-xl border border-warn/30 bg-warn/10 p-3 text-[11px] text-warn">
+        Bulk changes are written straight to your local database. Take a backup first if you're unsure.
+      </p>
     </Modal>
   );
 }

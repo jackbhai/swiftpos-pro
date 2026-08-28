@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, Search, Calculator as CalcIcon, Sun, Moon, Wifi, WifiOff, Bell, X, ShoppingCart, Lock,
+  Download, RefreshCw,
 } from 'lucide-react';
 import { NAV, BOTTOM_NAV } from './nav';
 import { useUI } from '@/store/ui';
 import { useSettings, applyTheme } from '@/store/settings';
 import { useCart } from '@/store/cart';
-import { useProducts } from '@/hooks/useData';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db/db';
+import { canInstall, promptInstall, hasUpdate, applyUpdate, onPwaChange } from '@/lib/pwa';
 import { cx } from '@/lib/format';
 import { stockState, expiryState } from '@/lib/calc';
 import { useHotkeys } from '@/hooks/useKeys';
@@ -20,7 +23,8 @@ export default function AppShell() {
   const { sidebarOpen, setSidebar, setPalette, setCalc, online, setOnline, setLocked } = useUI();
   const settings = useSettings();
   const cart = useCart();
-  const products = useProducts();
+  const [pwa, setPwa] = useState({ install: false, update: false });
+  useEffect(() => { const off = onPwaChange(() => setPwa({ install: canInstall(), update: hasUpdate() })); return () => { off(); }; }, []);
   const loc = useLocation();
   const nav = useNavigate();
 
@@ -42,7 +46,10 @@ export default function AppShell() {
     'mod+b': (e) => { e.preventDefault(); setCalc(true); },
   });
 
-  const alerts = (products || []).filter((p: any) => stockState(p) !== 'ok' || expiryState(p, settings.expiryAlertDays) === 'expired' || expiryState(p, settings.expiryAlertDays) === 'soon').length;
+  const alerts = useLiveQuery(
+    () => db.products.filter((p: any) => p.active && (stockState(p) !== 'ok' || expiryState(p, settings.expiryAlertDays) !== 'fresh')).count(),
+    [settings.expiryAlertDays], 0,
+  ) || 0;
   const current = NAV.find((n) => n.path === loc.pathname);
 
   return (
@@ -81,6 +88,8 @@ export default function AppShell() {
             <Bell size={18} />
             {alerts > 0 && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded-full bg-bad px-1 text-[9px] font-bold leading-4 text-white">{alerts}</span>}
           </NavLink>
+          {pwa.update && <button onClick={applyUpdate} className="rounded-lg p-2 text-ok hover:bg-surface2" title="Update available — tap to reload"><RefreshCw size={17} /></button>}
+          {pwa.install && <button onClick={promptInstall} className="rounded-lg p-2 text-brand hover:bg-surface2" title="Install app"><Download size={17} /></button>}
           {settings.appLockPin && <button onClick={() => setLocked(true)} className="rounded-lg p-2 text-ink2 hover:bg-surface2" title="Lock app"><Lock size={17} /></button>}
           <button onClick={() => settings.set({ theme: settings.theme === 'amoled' ? 'light' : 'amoled' })} className="rounded-lg p-2 text-ink2 hover:bg-surface2">
             {settings.theme === 'amoled' ? <Sun size={18} /> : <Moon size={18} />}

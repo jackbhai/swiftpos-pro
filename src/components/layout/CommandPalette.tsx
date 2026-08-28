@@ -1,10 +1,11 @@
+import { useCatalog } from '@/hooks/useCatalog';
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Search, CornerDownLeft } from 'lucide-react';
 import { NAV } from './nav';
 import { useUI } from '@/store/ui';
-import { useProducts, useCustomers } from '@/hooks/useData';
+import { useCustomers } from '@/hooks/useData';
 import { useCart } from '@/store/cart';
 import { fuzzyScore } from '@/lib/calc';
 import { money, cx } from '@/lib/format';
@@ -14,7 +15,7 @@ export default function CommandPalette() {
   const [q, setQ] = useState('');
   const [i, setI] = useState(0);
   const nav = useNavigate();
-  const products = useProducts();
+  const { products } = useCatalog();
   const customers = useCustomers();
   const cart = useCart();
 

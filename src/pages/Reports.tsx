@@ -3,22 +3,26 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
 import { Download, FileText, TrendingUp, Percent, Users, Package } from 'lucide-react';
-import { useSales, useProducts, useCustomers, useExpenses, useStaff } from '@/hooks/useData';
+import { useSales, useCustomers, useExpenses, useStaff } from '@/hooks/useData';
 import { money, moneyShort, num, dayKey, rangeFor, dt, pct } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
 import { Card, Stat, Tabs, SectionTitle, Empty, Badge } from '@/components/ui';
+import { useCatalog } from '@/hooks/useCatalog';
 import { useSettings } from '@/store/settings';
 import { expiryState, stockState } from '@/lib/calc';
+import { ABCReport, MixReport, BasketReport, ForecastReport } from '@/components/reports/Advanced';
 
 const TABS = [
   { id: 'sales', label: 'Sales' }, { id: 'products', label: 'Products' }, { id: 'gst', label: 'GST' },
   { id: 'profit', label: 'Profit & loss' }, { id: 'customers', label: 'Customers' },
   { id: 'stock', label: 'Stock health' }, { id: 'staff', label: 'Staff' },
+  { id: 'abc', label: 'ABC analysis' }, { id: 'mix', label: 'Demand mix' },
+  { id: 'basket', label: 'Basket affinity' }, { id: 'forecast', label: 'Forecast' },
 ];
 
 export default function Reports() {
   const sales = useSales() || [];
-  const products = useProducts() || [];
+  const { products } = useCatalog();
   const customers = useCustomers() || [];
   const expenses = useExpenses() || [];
   const staff = useStaff() || [];
@@ -203,6 +207,11 @@ export default function Reports() {
           </Card>
         </>
       )}
+
+      {tab === 'abc' && <ABCReport sales={list} products={products} />}
+      {tab === 'mix' && <MixReport sales={list} />}
+      {tab === 'basket' && <BasketReport sales={list} />}
+      {tab === 'forecast' && <ForecastReport sales={list} products={products} />}
 
       {tab === 'staff' && (
         <Card pad={false}>

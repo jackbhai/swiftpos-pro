@@ -15,6 +15,11 @@ const Reports = lazy(() => import('@/pages/Reports'));
 const Offers = lazy(() => import('@/pages/Offers'));
 const Tables = lazy(() => import('@/pages/Tables'));
 const Labels = lazy(() => import('@/pages/Labels'));
+const Returns = lazy(() => import('@/pages/Returns'));
+const Quotes = lazy(() => import('@/pages/Quotes'));
+const DayClose = lazy(() => import('@/pages/DayClose'));
+const StockTake = lazy(() => import('@/pages/StockTake'));
+const Reminders = lazy(() => import('@/pages/Reminders'));
 const Staff = lazy(() => import('@/pages/Staff'));
 const Activity = lazy(() => import('@/pages/Activity'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
@@ -37,6 +42,11 @@ export default function App() {
           <Route path="/offers" element={<Offers />} />
           <Route path="/tables" element={<Tables />} />
           <Route path="/labels" element={<Labels />} />
+          <Route path="/returns" element={<Returns />} />
+          <Route path="/quotes" element={<Quotes />} />
+          <Route path="/dayclose" element={<DayClose />} />
+          <Route path="/stocktake" element={<StockTake />} />
+          <Route path="/reminders" element={<Reminders />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/settings" element={<SettingsPage />} />
