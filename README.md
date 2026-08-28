@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v8
+# ⚡ SwiftPOS Pro v9
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -33,8 +33,14 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | 📝 **Quotes / estimates** | Build, print, WhatsApp, convert to bill in one tap |
 | 💬 **Bulk reminders** | Dues, win-back, birthday and VIP WhatsApp campaigns |
 | 🧠 **Reports+** | ABC/Pareto, demand mix, basket affinity, forecast & reorder plan |
+| 📒 **Khata / ledger** | Customer dues, vendor payables, payment in/out, printable statements |
+| 🍳 **Orders + KDS** | Live delivery board, kitchen display, KOT print, prep timers |
+| 🕒 **Attendance & payroll** | Punch in/out, hours, salary pro-rating, commission, payslips |
+| 🥘 **Recipes & production** | BOM costing, can-make calculation, production runs that move stock |
+| 🔁 **Subscriptions** | Daily/weekly/monthly repeat orders with due queue and MRR |
+| ✨ **Insights engine** | Health score + 18 ranked, actionable business insights |
 
-Full list: [FEATURES.md](./FEATURES.md) — **275+ features**.
+Full list: [FEATURES.md](./FEATURES.md) — **345+ features**.
 
 ---
 

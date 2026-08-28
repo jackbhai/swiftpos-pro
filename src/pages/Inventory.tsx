@@ -13,7 +13,7 @@ import { stockState, expiryState, fuzzyScore } from '@/lib/calc';
 import { downloadCSV } from '@/lib/csv';
 import { Card, Stat, Modal, Field, Input, Select, Empty, SearchBar, Badge, Tabs, Toggle, ConfirmBtn } from '@/components/ui';
 import { useSettings, useShop } from '@/store/settings';
-import { toast } from '@/store/ui';
+import { toast, toastUndo } from '@/store/ui';
 import type { Product } from '@/db/types';
 
 type SortKey = 'name' | 'stock' | 'price' | 'value' | 'updated';
@@ -144,7 +144,11 @@ export default function Inventory() {
             {selected.size > 0 && <>
               <button className="btn-soft ml-auto px-2 py-1 text-xs" onClick={() => setBulkOpen(true)}><Pencil size={13} /> Bulk edit</button>
               <button className="btn-ghost px-2 py-1 text-xs" onClick={async () => {
-                await db.products.bulkDelete([...selected]); toast(`${selected.size} deleted`); setSelected(new Set());
+                const ids = [...selected];
+                const backup = (await db.products.bulkGet(ids)).filter(Boolean) as any[];
+                await db.products.bulkDelete(ids);
+                setSelected(new Set());
+                toastUndo(`${ids.length} deleted`, async () => { await db.products.bulkPut(backup); toast('Restored'); });
               }}><Trash2 size={13} /> Delete</button>
             </>}
           </div>
@@ -161,7 +165,11 @@ export default function Inventory() {
                 onCheck={(v) => setSelected((prev) => { const n = new Set(prev); v ? n.add(p.id) : n.delete(p.id); return n; })}
                 onEdit={() => setEdit(p)} onAdjust={() => setAdjust(p)}
                 onFav={() => db.products.update(p.id, { favorite: !p.favorite })}
-                onDelete={async () => { await db.products.delete(p.id); toast('Deleted'); }} />
+                onDelete={async () => {
+                  const backup = await db.products.get(p.id);
+                  await db.products.delete(p.id);
+                  toastUndo(`${p.name} deleted`, async () => { if (backup) { await db.products.put(backup); toast('Restored'); } });
+                }} />
             ) : (
               <button onClick={() => setEdit(p)} className="card card-hover h-full w-full p-3 text-left">
                 <p className="line-clamp-2 min-h-[34px] text-xs font-semibold text-ink">{p.name}</p>

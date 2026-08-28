@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Info, Undo2 } from 'lucide-react';
 import { useUI } from '@/store/ui';
 
 const icons = { ok: CheckCircle2, err: XCircle, warn: AlertTriangle, info: Info } as const;
@@ -15,6 +15,13 @@ export default function Toasts() {
             className={`pointer-events-auto animate-pop flex w-full max-w-sm items-center gap-2.5 rounded-xl border bg-surface/95 px-3.5 py-2.5 text-sm font-semibold text-ink shadow-2xl backdrop-blur ${tones[t.kind]}`}>
             <Icon size={17} className="shrink-0" />
             <span className="flex-1 text-left">{t.msg}</span>
+            {t.undo && (
+              <span role="button" tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); t.undo?.(); dismiss(t.id); }}
+                className="shrink-0 rounded-lg border border-line px-2 py-1 text-[11px] font-bold text-brand hover:bg-surface2">
+                <Undo2 size={12} className="mr-1 inline" />{t.undoLabel}
+              </span>
+            )}
           </button>
         );
       })}

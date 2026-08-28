@@ -8,7 +8,7 @@ import {
   IndianRupee, TrendingUp, ShoppingBag, Users, AlertTriangle, PackageX, CalendarClock,
   Percent, ArrowUpRight, ArrowDownRight, Zap,
 } from 'lucide-react';
-import { useSales, useCustomers, useExpenses } from '@/hooks/useData';
+import { useSales, useCustomers, useExpenses, useOrders, useSubscriptions } from '@/hooks/useData';
 import { money, moneyShort, num, dayKey, rangeFor, ago, cx } from '@/lib/format';
 import { stockState, expiryState } from '@/lib/calc';
 import { Card, Stat, SectionTitle, Tabs, Badge, Empty } from '@/components/ui';
@@ -23,7 +23,14 @@ export default function Dashboard() {
   const customers = useCustomers() || [];
   const expenses = useExpenses() || [];
   const s = useSettings();
+  const liveOrderList = useOrders() || [];
+  const subs = useSubscriptions() || [];
   const [period, setPeriod] = useState<'today' | '7d' | '30d' | '90d'>('7d');
+
+  const liveOrders = liveOrderList.filter((o: any) => !['delivered', 'cancelled'].includes(o.status));
+  const dueSubs = subs.filter((x: any) => x.active && x.nextDue <= new Date().toISOString().slice(0, 10));
+  const totalDues = customers.reduce((t: number, c: any) => t + Math.max(0, c.credit), 0);
+  const outCount = products.filter((p: any) => p.active && stockState(p) === 'out').length;
 
   const [from, to] = rangeFor(period);
   const inRange = useMemo(() => sales.filter((x: any) => x.ts >= from && x.ts <= to && x.status !== 'void'), [sales, from, to]);
@@ -86,7 +93,33 @@ export default function Dashboard() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Tabs tabs={[{ id: 'today', label: 'Today' }, { id: '7d', label: '7 days' }, { id: '30d', label: '30 days' }, { id: '90d', label: '90 days' }]} active={period} onChange={(v) => setPeriod(v as any)} />
-        <Link to="/pos" className="btn-primary"><Zap size={15} /> New Sale</Link>
+        <div className="flex gap-2">
+          <Link to="/insights" className="btn-soft"><Zap size={15} /> Insights</Link>
+          <Link to="/pos" className="btn-primary"><Zap size={15} /> New Sale</Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <Link to="/orders" className={cx('card card-hover flex items-center gap-2 p-3', liveOrders.length && 'ring-1 ring-brand/40')}>
+          <span className="rounded-lg bg-brand/10 p-2 text-brand"><Zap size={15} /></span>
+          <span className="min-w-0"><span className="block text-sm font-bold text-ink">{num(liveOrders.length)} live orders</span>
+          <span className="block text-[11px] text-ink3">kitchen & delivery board</span></span>
+        </Link>
+        <Link to="/ledger" className={cx('card card-hover flex items-center gap-2 p-3', totalDues > 0 && 'ring-1 ring-bad/40')}>
+          <span className="rounded-lg bg-bad/10 p-2 text-bad"><IndianRupee size={15} /></span>
+          <span className="min-w-0"><span className="block text-sm font-bold text-ink">{moneyShort(totalDues, s.currency)} udhaar</span>
+          <span className="block text-[11px] text-ink3">collect from khata</span></span>
+        </Link>
+        <Link to="/subscriptions" className={cx('card card-hover flex items-center gap-2 p-3', dueSubs.length && 'ring-1 ring-warn/40')}>
+          <span className="rounded-lg bg-warn/10 p-2 text-warn"><CalendarClock size={15} /></span>
+          <span className="min-w-0"><span className="block text-sm font-bold text-ink">{num(dueSubs.length)} repeat orders due</span>
+          <span className="block text-[11px] text-ink3">bill in one tap</span></span>
+        </Link>
+        <Link to="/inventory" className={cx('card card-hover flex items-center gap-2 p-3', outCount > 0 && 'ring-1 ring-warn/40')}>
+          <span className="rounded-lg bg-warn/10 p-2 text-warn"><PackageX size={15} /></span>
+          <span className="min-w-0"><span className="block text-sm font-bold text-ink">{num(outCount)} out of stock</span>
+          <span className="block text-[11px] text-ink3">reorder now</span></span>
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

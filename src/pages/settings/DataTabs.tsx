@@ -5,7 +5,7 @@ import {
 import { Card, Field, Input, Select, Textarea, Toggle, Tabs, Badge, ConfirmBtn, Modal, SectionTitle, Empty } from '@/components/ui';
 import { useSettings, useShop } from '@/store/settings';
 import { SHOP_PROFILES } from '@/lib/shopProfiles';
-import { exportBackup, wipeAll } from '@/lib/backup';
+import { exportBackup, exportBackupCompressed, readBackupFile, autoSnapshot, wipeAll } from '@/lib/backup';
 import { seedIfEmpty } from '@/db/seed';
 import { db } from '@/db/db';
 import { toast } from '@/store/ui';
@@ -317,12 +317,14 @@ export function BackupTab() {
         <SectionTitle title="Backup & restore" sub={s.lastBackup ? `Last backup ${dt(s.lastBackup)}` : 'No backup taken yet'} />
         <div className="flex flex-wrap gap-2">
           <button className="btn-primary" onClick={async () => { await exportBackup(); toast('Backup downloaded'); }}><Download size={16} /> Export full backup</button>
-          <input ref={fileRef} type="file" accept=".json" hidden onChange={async (e) => {
+          <button className="btn-soft" onClick={async () => { await exportBackupCompressed(); toast('Compressed backup downloaded (.json.gz)'); }}><Download size={16} /> Export compressed (.gz)</button>
+          <input ref={fileRef} type="file" accept=".json,.gz" hidden onChange={async (e) => {
             const f = e.target.files?.[0]; if (!f) return;
-            try { const { importBackup } = await import('@/lib/backup'); await importBackup(await f.text()); toast('Backup restored'); }
+            try { const { importBackup } = await import('@/lib/backup'); await importBackup(await readBackupFile(f)); toast('Backup restored'); }
             catch (err: any) { toast(err.message ?? 'Restore failed', 'err'); }
           }} />
-          <button className="btn-soft" onClick={() => fileRef.current?.click()}><Upload size={15} /> Restore backup</button>
+          <button className="btn-soft" onClick={() => fileRef.current?.click()}><Upload size={15} /> Restore backup (.json / .gz)</button>
+          <button className="btn-soft" onClick={async () => { const ok = await autoSnapshot(); toast(ok ? 'In-browser snapshot saved' : 'Snapshot too large for local storage', ok ? 'ok' : 'warn'); }}><RefreshCw size={15} /> Save quick snapshot</button>
         </div>
       </Card>
       <Card>

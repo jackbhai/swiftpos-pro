@@ -161,3 +161,41 @@ export interface Quote {
   lines: CartLine[]; total: number; validTill?: string; note?: string;
   status: 'open' | 'converted' | 'expired';
 }
+
+export interface LedgerEntry {
+  id: ID; ts: number; party: 'customer' | 'vendor'; partyId: ID; partyName: string;
+  direction: 'in' | 'out';           // in = money received, out = money paid
+  amount: number; mode: PayMode; ref?: string; note?: string; by?: string;
+  balanceAfter?: number;
+}
+
+export interface Order {
+  id: ID; orderNo: string; ts: number; channel: 'dine-in' | 'takeaway' | 'delivery' | 'online' | 'pickup';
+  status: 'new' | 'preparing' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
+  lines: CartLine[]; total: number; customerId?: ID; customerName?: string; phone?: string;
+  address?: string; tableId?: ID; rider?: string; note?: string; saleId?: ID;
+  promisedAt?: number; readyAt?: number; deliveredAt?: number; prepMinutes?: number;
+}
+
+export interface Attendance {
+  id: ID; staffId: ID; staffName: string; date: string;   // YYYY-MM-DD
+  inTs?: number; outTs?: number; minutes: number; status: 'present' | 'half' | 'absent' | 'leave';
+  note?: string;
+}
+
+export interface PayrollRule {
+  id: ID; staffId: ID; monthlySalary: number; hourlyRate?: number; commissionPct?: number;
+  paidTill?: string; note?: string;
+}
+
+export interface Recipe {
+  id: ID; productId: ID; productName: string; yield: number;
+  items: { productId: ID; name: string; qty: number; unit: string }[];
+  labourCost?: number; note?: string; updatedAt: number;
+}
+
+export interface Subscription {
+  id: ID; customerId: ID; customerName: string; phone?: string; title: string;
+  lines: CartLine[]; amount: number; every: 'day' | 'week' | 'month'; nextDue: string;
+  active: boolean; lastBilled?: number; note?: string; createdAt: number;
+}

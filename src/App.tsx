@@ -20,6 +20,12 @@ const Quotes = lazy(() => import('@/pages/Quotes'));
 const DayClose = lazy(() => import('@/pages/DayClose'));
 const StockTake = lazy(() => import('@/pages/StockTake'));
 const Reminders = lazy(() => import('@/pages/Reminders'));
+const Ledger = lazy(() => import('@/pages/Ledger'));
+const Orders = lazy(() => import('@/pages/Orders'));
+const Attendance = lazy(() => import('@/pages/Attendance'));
+const Recipes = lazy(() => import('@/pages/Recipes'));
+const Subscriptions = lazy(() => import('@/pages/Subscriptions'));
+const Insights = lazy(() => import('@/pages/Insights'));
 const Staff = lazy(() => import('@/pages/Staff'));
 const Activity = lazy(() => import('@/pages/Activity'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
@@ -47,6 +53,12 @@ export default function App() {
           <Route path="/dayclose" element={<DayClose />} />
           <Route path="/stocktake" element={<StockTake />} />
           <Route path="/reminders" element={<Reminders />} />
+          <Route path="/ledger" element={<Ledger />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/subscriptions" element={<Subscriptions />} />
+          <Route path="/insights" element={<Insights />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/settings" element={<SettingsPage />} />

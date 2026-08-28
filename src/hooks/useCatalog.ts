@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import type { Product } from '@/db/types';
-import { searchKey, rank, debounce } from '@/lib/perf';
+import { searchKey, rank, rankMulti, debounce, lru } from '@/lib/perf';
 
 export interface IndexedProduct extends Product { _key: string; _tokens: string[] }
 
@@ -24,6 +24,8 @@ export function useCatalog() {
       }) as IndexedProduct;
     });
     cache = { stamp, list };
+    qCache.clear();
+    lastQuery = { stamp: '', q: '', res: [] };
     return list;
   }, [products]);
 
@@ -39,15 +41,45 @@ export function useDebounced<T>(value: T, ms = 160) {
   return v;
 }
 
+const qCache = lru<string, IndexedProduct[]>(60);
+let lastQuery = { stamp: '', q: '', res: [] as IndexedProduct[] };
+
+/**
+ * Ranked search over the shared catalogue index.
+ * Three layers of optimisation:
+ *   1. LRU cache — repeated queries (backspace, tab switches) are instant.
+ *   2. Prefix narrowing — "para" only re-scans the results of "par".
+ *   3. Multi-word AND ranking with early rejection.
+ */
 export function searchProducts(list: IndexedProduct[], query: string, limit = 0): IndexedProduct[] {
   const q = searchKey(query);
   if (!q) return limit ? list.slice(0, limit) : list;
+
+  const stamp = cache.stamp + ':' + list.length;
+  const ck = stamp + '|' + q + '|' + limit;
+  const hit = qCache.get(ck);
+  if (hit) return hit;
+
+  // narrow: if the user just typed one more character, search only the previous hits
+  let source = list;
+  if (lastQuery.stamp === stamp && lastQuery.q && q.startsWith(lastQuery.q) && lastQuery.res.length) {
+    source = lastQuery.res;
+  }
+
+  const words = q.split(' ').filter(Boolean);
   const out: { p: IndexedProduct; s: number }[] = [];
-  for (const p of list) {
-    const s = rank(q, p._key, p._tokens);
-    if (s > 0) out.push({ p, s });
+  for (let i = 0; i < source.length; i++) {
+    const p = source[i];
+    const sc = words.length > 1 ? rankMulti(words, p._key, p._tokens) : rank(q, p._key, p._tokens);
+    if (sc > 0) out.push({ p, s: sc });
   }
   out.sort((a, b) => b.s - a.s);
-  const res = out.map((x) => x.p);
-  return limit ? res.slice(0, limit) : res;
+  const full = out.map((x) => x.p);
+  lastQuery = { stamp, q, res: full };
+  const res = limit ? full.slice(0, limit) : full;
+  qCache.set(ck, res);
+  return res;
 }
+
+/** Clear memoised search results (called automatically when the catalogue changes). */
+export const clearSearchCache = () => { qCache.clear(); lastQuery = { stamp: '', q: '', res: [] }; };

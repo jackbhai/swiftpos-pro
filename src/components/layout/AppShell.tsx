@@ -11,6 +11,7 @@ import { useCart } from '@/store/cart';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { canInstall, promptInstall, hasUpdate, applyUpdate, onPwaChange } from '@/lib/pwa';
+import { idle } from '@/lib/perf';
 import { cx } from '@/lib/format';
 import { stockState, expiryState } from '@/lib/calc';
 import { useHotkeys } from '@/hooks/useKeys';
@@ -24,6 +25,14 @@ export default function AppShell() {
   const settings = useSettings();
   const cart = useCart();
   const [pwa, setPwa] = useState({ install: false, update: false });
+  // Warm the most-used routes while the browser is idle — navigation feels instant.
+  useEffect(() => {
+    idle(() => {
+      import('@/pages/POS'); import('@/pages/Inventory'); import('@/pages/Sales');
+      idle(() => { import('@/pages/Customers'); import('@/pages/Insights'); import('@/pages/Ledger'); }, 3000);
+    }, 2000);
+  }, []);
+
   useEffect(() => { const off = onPwaChange(() => setPwa({ install: canInstall(), update: hasUpdate() })); return () => { off(); }; }, []);
   const loc = useLocation();
   const nav = useNavigate();

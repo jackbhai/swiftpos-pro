@@ -328,3 +328,91 @@
 273. **Basket affinity** — frequently-bought-together pairs for combos and shelf placement
 274. **Forecast** — 7-day moving average, week-on-week growth, 30-day projection
 275. **Reorder plan** — daily velocity, days-of-cover and suggested order quantity, exportable
+
+---
+
+# v9 — business operations & deep optimisation release (276–345)
+
+## Khata / ledger (new module)
+276. Customer **receivables** and vendor **payables** in one khata view
+277. Record payment **in / out** with mode, note, cheque reference
+278. Running **balance-after** on every entry
+279. Quick-amount chips (full balance, half, ₹500, ₹1000, ₹5000)
+280. Over-credit-limit warning badge per customer
+281. Customer **advance** tracking (negative balances)
+282. Printable **account statement** per party
+283. One-tap WhatsApp payment reminder from the khata
+284. Full payment history with CSV export
+285. "Collected today" KPI for daily cash reconciliation
+
+## Orders, delivery & kitchen display (new module)
+286. Live **order board** with new → preparing → ready → dispatched → delivered flow
+287. **Kitchen Display System (KDS)** — tap-to-bump tiles that colour by age (10/20 min)
+288. Order ageing timer and **late-order** detection against promised time
+289. Channels: dine-in, takeaway, delivery, online/aggregator, pickup
+290. Rider/staff assignment and delivery address capture
+291. **KOT printing** per order (76 mm, item notes included)
+292. Call-customer button, cancel with undo
+293. Convert an order into a bill (loads straight into the POS cart)
+294. Average prep-time KPI computed from real ready timestamps
+295. Order history with status and channel
+
+## Attendance & payroll (new module)
+296. **Punch in / punch out** per staff member with live hours
+297. Auto half-day detection (<4 hours) and leave marking
+298. Month sheet with per-day in/out, hours and status
+299. Payroll rules per staff: monthly salary, hourly rate, commission %
+300. Salary **pro-rated by attendance** (half-days counted at 50%)
+301. **Commission auto-calculated** from that staff member's sales
+302. Printable **payslip** per employee
+303. Payroll and attendance CSV exports
+304. Payroll total for the month at a glance
+
+## Recipes, BOM & production (new module)
+305. Define a recipe/BOM for any finished product (thali, combo, mixture, repack, manufacturing)
+306. Ingredient list with quantities and units
+307. Labour/overhead cost per batch
+308. **Auto cost-per-unit** and live **margin %** against selling price
+309. **"Can make now"** calculation from current ingredient stock
+310. **Production run** — consumes ingredients, creates finished stock, updates cost
+311. Every production movement written to the stock log with a run reference
+
+## Subscriptions & repeat orders (new module)
+312. Daily / weekly / monthly recurring plans per customer
+313. **Due-today** queue with overdue highlighting
+314. One-tap "Bill now" that loads the plan into the cart and rolls the next due date
+315. WhatsApp confirmation reminder per plan
+316. Pause / resume plans
+317. **Monthly recurring revenue (MRR)** KPI normalised across cycles
+
+## Insights engine (new module)
+318. **Business health score** (0–100) with animated ring gauge
+319. 18 rule-based insights ranked critical → warning → win → idea
+320. Out-of-stock, expired-stock and **below-cost pricing** alerts
+321. Credit-limit breaches and udhaar-vs-revenue ratio warnings
+322. Dead-stock capital-locked alert with value
+323. Discount-leakage detection (discounts > 8% of sales)
+324. Low-margin and negative-net-profit warnings
+325. Month-on-month growth/decline detection with recommended action
+326. Refund-rate anomaly detection
+327. Lapsed-customer and repeat-rate coaching
+328. Every insight carries a **direct action link** to the screen that fixes it
+329. Quick facts panel: peak hour, best weekday, average bill, catalogue size
+
+## Performance & platform (deep optimisation)
+330. **LRU query cache** — repeated searches return instantly from memory
+331. **Prefix narrowing** — typing one more character re-scans only the previous result set
+332. **Multi-word AND ranking** with early rejection (no more junk matches)
+333. Search cache auto-invalidates when the catalogue changes
+334. **Idle route prefetching** — POS, Inventory, Sales, Insights and Khata warm up in the background
+335. Six more screens moved onto the shared indexed catalogue
+336. Dexie schema v3 with six new stores, migrated automatically
+337. **Undo toasts** — deleted product, bulk delete, quote, recipe, subscription and cancelled order can all be restored
+338. Bulk delete now snapshots records before deleting
+339. **Gzip-compressed backups** (`.json.gz`) — typically 8–12× smaller
+340. Restore accepts both `.json` and `.json.gz`
+341. **Quick in-browser snapshot** that survives a refresh without downloading a file
+342. Backups now include ledger, orders, attendance, payroll, recipes and subscriptions
+343. Service-worker cache bumped so every device picks up the new build automatically
+344. Dashboard **action strip**: live orders, udhaar, repeat orders due, out-of-stock — each one tap away
+345. 28 screens total, all route-split and lazily loaded

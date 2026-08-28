@@ -9,7 +9,7 @@ import { money, dt, cx } from '@/lib/format';
 import { Card, Stat, Modal, Field, Input, Select, Empty, SearchBar, Badge, Textarea, Tabs, SectionTitle } from '@/components/ui';
 import { useSettings } from '@/store/settings';
 import { useCart } from '@/store/cart';
-import { toast } from '@/store/ui';
+import { toast, toastUndo } from '@/store/ui';
 import { printHTML, waLink } from '@/lib/receipt';
 import { amountInWords } from '@/lib/words';
 import type { Quote, CartLine, Product } from '@/db/types';
@@ -81,7 +81,7 @@ export default function Quotes() {
               <button className="rounded-lg p-1.5 text-ink3 hover:text-brand" onClick={() => print(x)}><Printer size={15} /></button>
               <button className="rounded-lg p-1.5 text-ink3 hover:text-ok" onClick={() => share(x)}><Share2 size={15} /></button>
               {x.status === 'open' && <button className="btn-soft px-2 py-1 text-xs" onClick={() => convert(x)}><ShoppingCart size={13} /> Bill</button>}
-              <button className="rounded-lg p-1.5 text-ink3 hover:text-bad" onClick={async () => { await db.quotes.delete(x.id); toast('Deleted'); }}><Trash2 size={15} /></button>
+              <button className="rounded-lg p-1.5 text-ink3 hover:text-bad" onClick={async () => { await db.quotes.delete(x.id); toastUndo(`${x.quoteNo} deleted`, async () => { await db.quotes.put(x); toast('Restored'); }); }}><Trash2 size={15} /></button>
             </div>
           ))}
         </Card>

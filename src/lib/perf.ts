@@ -44,3 +44,27 @@ export async function chunkedForEach<T>(items: T[], fn: (item: T, i: number) => 
     await new Promise((r) => setTimeout(r, 0));
   }
 }
+
+/** Tiny LRU memo cache for expensive pure lookups. */
+export function lru<K, V>(max = 40) {
+  const m = new Map<K, V>();
+  return {
+    get(k: K) { const v = m.get(k); if (v !== undefined) { m.delete(k); m.set(k, v); } return v; },
+    set(k: K, v: V) { if (m.has(k)) m.delete(k); m.set(k, v); if (m.size > max) m.delete(m.keys().next().value as K); },
+    clear() { m.clear(); },
+    get size() { return m.size; },
+  };
+}
+
+/** Rank a multi-word query: every word must hit somewhere (AND semantics). */
+export function rankMulti(words: string[], key: string, tokens?: string[]): number {
+  if (words.length === 0) return 1;
+  if (words.length === 1) return rank(words[0], key, tokens);
+  let total = 0;
+  for (const w of words) {
+    const r = rank(w, key, tokens);
+    if (r === 0) return 0;
+    total += r;
+  }
+  return total / words.length + 20;
+}

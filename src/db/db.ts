@@ -2,6 +2,7 @@ import Dexie, { Table as DexTable } from 'dexie';
 import type {
   Product, Sale, Customer, Vendor, PurchaseOrder, Expense, StockLog,
   Activity, HeldBill, Coupon, Staff, Shift, Table, Reservation, CustomTemplate, Quote,
+  LedgerEntry, Order, Attendance, PayrollRule, Recipe, Subscription,
 } from './types';
 
 export class SwiftDB extends Dexie {
@@ -21,6 +22,12 @@ export class SwiftDB extends Dexie {
   reservations!: DexTable<Reservation, string>;
   templates!: DexTable<CustomTemplate, string>;
   quotes!: DexTable<Quote, string>;
+  ledger!: DexTable<LedgerEntry, string>;
+  orders!: DexTable<Order, string>;
+  attendance!: DexTable<Attendance, string>;
+  payroll!: DexTable<PayrollRule, string>;
+  recipes!: DexTable<Recipe, string>;
+  subscriptions!: DexTable<Subscription, string>;
 
   constructor() {
     super('swiftpos-pro-v7');
@@ -43,6 +50,14 @@ export class SwiftDB extends Dexie {
     this.version(2).stores({
       templates: 'id, name, paper, createdAt',
       quotes: 'id, ts, customerId, status',
+    });
+    this.version(3).stores({
+      ledger: 'id, ts, party, partyId, direction',
+      orders: 'id, orderNo, ts, status, channel, customerId',
+      attendance: 'id, staffId, date, status',
+      payroll: 'id, staffId',
+      recipes: 'id, productId, updatedAt',
+      subscriptions: 'id, customerId, nextDue, active',
     });
   }
 }
