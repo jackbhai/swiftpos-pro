@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v10.1
+# ⚡ SwiftPOS Pro v11.0
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -47,7 +47,10 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | 🧵 **Worker analytics** | ABC, basket affinity & velocity computed off the main thread |
 | 📤 **Bill sharing** | WhatsApp as **text or image**, plus download the bill as a PNG |
 
-Full list: [FEATURES.md](./FEATURES.md) — **432+ features**.
+Full list: [FEATURES.md](./FEATURES.md) — **703 features**.
+
+### New in v11
+Gift cards & wallets · price lists / rate cards · damage-expiry-wastage register · monthly & staff targets · shop task board · customer-facing second screen · digital QR menu · smart auto-reorder POs · WhatsApp campaign segments · what-if pricing lab · customer feedback & NPS · gift-card payments at the POS.
 
 ---
 

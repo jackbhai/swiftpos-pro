@@ -2,7 +2,7 @@ import { db } from '@/db/db';
 import { download } from './csv';
 import { useSettings } from '@/store/settings';
 
-const TABLES = ['products','sales','customers','vendors','purchaseOrders','expenses','stockLogs','activity','holds','coupons','staff','shifts','restaurantTables','reservations','templates','quotes','ledger','orders','attendance','payroll','recipes','subscriptions'] as const;
+const TABLES = ['products','sales','customers','vendors','purchaseOrders','expenses','stockLogs','activity','holds','coupons','staff','shifts','restaurantTables','reservations','templates','quotes','ledger','orders','attendance','payroll','recipes','subscriptions','branches','transfers','serviceJobs','appointments','priceLists','giftCards','writeOffs','targets','tasks', 'feedback'] as const;
 
 async function collect() {
   const data: any = { app: 'SwiftPOS Pro', version: 9, ts: Date.now(), settings: useSettings.getState() };

@@ -33,6 +33,17 @@ const TaxCenter = lazy(() => import('@/pages/TaxCenter'));
 const Cleanup = lazy(() => import('@/pages/Cleanup'));
 const Staff = lazy(() => import('@/pages/Staff'));
 const Activity = lazy(() => import('@/pages/Activity'));
+const Loyalty = lazy(() => import('@/pages/Loyalty'));
+const Pricing = lazy(() => import('@/pages/Pricing'));
+const WriteOff = lazy(() => import('@/pages/WriteOff'));
+const Targets = lazy(() => import('@/pages/Targets'));
+const Tasks = lazy(() => import('@/pages/Tasks'));
+const Display = lazy(() => import('@/pages/Display'));
+const Menu = lazy(() => import('@/pages/Menu'));
+const AutoPO = lazy(() => import('@/pages/AutoPO'));
+const FeedbackPage = lazy(() => import('@/pages/Feedback'));
+const Simulator = lazy(() => import('@/pages/Simulator'));
+const Campaigns = lazy(() => import('@/pages/Campaigns'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
 const Help = lazy(() => import('@/pages/Help'));
 
@@ -71,6 +82,17 @@ export default function App() {
           <Route path="/cleanup" element={<Cleanup />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/loyalty" element={<Loyalty />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/writeoff" element={<WriteOff />} />
+          <Route path="/targets" element={<Targets />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/display" element={<Display />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/autopo" element={<AutoPO />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/simulator" element={<Simulator />} />
+          <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/help" element={<Help />} />
           <Route path="*" element={<Navigate to="/" replace />} />

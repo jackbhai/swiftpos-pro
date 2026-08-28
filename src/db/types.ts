@@ -230,3 +230,37 @@ export interface PriceList {
   id: ID; name: string; kind: 'percent' | 'fixed-margin' | 'manual'; value: number;
   customerTag?: string; items?: { productId: ID; price: number }[]; active: boolean; note?: string;
 }
+
+export interface GiftCard {
+  id: ID; code: string; kind: 'gift' | 'wallet' | 'voucher'; issuedTo?: ID; issuedName?: string;
+  phone?: string; faceValue: number; balance: number; issuedAt: number; expiry?: string;
+  active: boolean; note?: string; history: { ts: number; amount: number; type: 'issue' | 'redeem' | 'topup' | 'expire'; ref?: string }[];
+}
+
+export interface WriteOff {
+  id: ID; ts: number; productId: ID; productName: string; qty: number; unit: string;
+  reason: 'damage' | 'expiry' | 'theft' | 'sample' | 'personal' | 'wastage' | 'other';
+  cost: number; value: number; by?: string; note?: string; batch?: string;
+}
+
+export interface Target {
+  id: ID; period: string;              // YYYY-MM
+  scope: 'shop' | 'staff' | 'category';
+  refId?: ID; refName?: string;
+  metric: 'revenue' | 'profit' | 'bills' | 'items' | 'customers';
+  value: number; note?: string; createdAt: number;
+}
+
+export interface Task {
+  id: ID; title: string; detail?: string; due?: string; done: boolean;
+  priority: 'low' | 'normal' | 'high'; assignee?: string; tag?: string;
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly'; createdAt: number; doneAt?: number;
+}
+
+export interface Feedback {
+  id: ID; ts: number; customerId?: ID; customerName?: string; phone?: string;
+  score: number;            // 0-10 NPS
+  rating: number;           // 1-5 stars
+  comment?: string; tags?: string[]; saleId?: ID; billNo?: string;
+  resolved?: boolean; reply?: string; source: 'counter' | 'whatsapp' | 'qr' | 'phone';
+}

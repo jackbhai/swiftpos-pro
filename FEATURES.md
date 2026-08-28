@@ -536,3 +536,314 @@
 438. Same sheet everywhere: text, image, save PNG, preview, copy, SMS, any app
 439. Phone number is pre-filled from the customer record when available
 440. Service worker bumped to v10.2 so every device picks up the new bill-sharing UI
+
+## v11 — 700+ features (441 onwards)
+
+
+### Gift cards, wallets & vouchers (`/loyalty`)
+
+441. Dedicated Gift & Wallet screen for prepaid value of every kind
+442. Issue **gift cards** with a face value and auto-generated unique code
+443. Issue **prepaid wallets** customers can top up and spend down
+444. Issue **discount vouchers** with a fixed value
+445. Random human-readable code generator (easy to read out on the phone)
+446. Manual code entry when you print your own card stock
+447. Assign a card to a customer, or keep it as a bearer card
+448. Expiry date per card, with expired cards flagged automatically
+449. Redeem any amount against a card with live balance validation
+450. Top-up an existing wallet without issuing a new card
+451. Full transaction history per card (issue, top-up, redeem) with timestamps
+452. Balance never goes negative — over-redemption is blocked with a clear message
+453. Activate / deactivate a card instantly (lost or stolen cards)
+454. Printable gift-card design with QR code of the card code
+455. QR code scans straight to the card code for fast redemption
+456. WhatsApp the balance and code to the customer in one tap
+457. Search cards by code, customer or type
+458. Live **liability dashboard** — total outstanding balance you owe customers
+459. Stats for issued value, redeemed value and redemption rate
+460. Filter by card type (gift / wallet / voucher) and active state
+461. CSV export of every card with balances and status
+462. Loyalty-points panel showing the shop's points rules in one place
+463. Points earning rate, point value, minimum redemption and expiry shown live
+464. Birthday-bonus points setting surfaced next to the rules
+465. Top loyalty members leaderboard by points balance
+466. Total points liability converted into rupees so you know the real cost
+467. Delete with undo on every card action
+468. Everything stored offline in IndexedDB and included in backups
+
+### Price lists & rate cards (`/pricing`)
+
+469. Price Lists screen for wholesale / retail / staff / distributor pricing
+470. Percent-off price lists (e.g. wholesale = MRP − 12%)
+471. Cost-plus-margin price lists (e.g. always 18% over cost)
+472. Manual per-item price lists for negotiated rates
+473. Unlimited price lists, each independently active or paused
+474. Tag a price list to a customer tag so the right rate applies to the right buyer
+475. Notes field per price list for internal rules
+476. Live preview of computed prices for any list before you save it
+477. Side-by-side comparison of MRP vs list price vs margin
+478. Per-item override inside a manual list, with reset to formula
+479. Automatic margin calculation against cost for every row
+480. Warning when a computed price falls below cost price
+481. Virtualised rate-card table that stays smooth on 27,000+ products
+482. Search and category filter inside the rate card
+483. Printable rate card (clean A4 layout) to hand to wholesale customers
+484. CSV export of a complete rate card, ready to email
+485. Margin-band analysis tab: items grouped by profitability band
+486. Per-band CSV export to fix low-margin products in bulk
+487. Count and value of stock sitting in each margin band
+488. Negative-margin detector across the whole catalogue
+489. Rounding rules so list prices come out in clean numbers
+490. Duplicate a price list as a starting point for a new one
+491. Delete a price list with undo
+492. Price lists included in backup / restore and in the JSON import format
+
+### Damage, expiry & wastage register (`/writeoff`)
+
+493. Dedicated Write-off screen so shrinkage is recorded, not hidden
+494. Seven reasons: damage, expiry, theft, wastage, sample, own use, other
+495. One-tap reason chips for fast entry
+496. Product search with live stock display while writing off
+497. Quantity validation against available stock
+498. Loss automatically valued at cost price
+499. Live before → after stock preview before you confirm
+500. Stock is reduced and a stock-log entry is written in the same action
+501. Batch number captured automatically when the product has one
+502. Free-text note for who, how and when
+503. Monthly register view with month picker
+504. Total monthly loss headline with entry count
+505. Loss split by reason as coloured chips
+506. Reverse any write-off — stock is restored, with undo
+507. CSV export of the monthly register for your accountant
+508. Expiring / expired tab listing every batch nearing expiry
+509. Expired stock value totalled so you can see money sitting on the shelf
+510. Expiry list sorted by nearest date first, with stock value per row
+511. Write off straight from the expiring list
+512. Activity log entry for every write-off (audit trail)
+513. All write-offs feed the stock-log history on the product
+514. Works completely offline; included in backups
+
+### Targets & goals (`/targets`)
+
+515. Monthly targets screen for the whole shop, per staff member or per category
+516. Five target metrics: revenue, profit, bill count, items sold, unique customers
+517. Live achievement calculated straight from real sales
+518. Progress bar per target with percentage complete
+519. Pace marker showing where you *should* be today in the month
+520. Ahead / behind pace verdict in plain Hinglish
+521. Run-rate projection for month-end based on current speed
+522. On-track vs behind-target banner for the main shop target
+523. "Roz kitna chahiye" — required daily sales to still hit the target
+524. Auto-target button: last month's revenue + 10%
+525. Month picker to review or plan any month
+526. Staff picker so each cashier gets their own goal
+527. Category targets to push a specific department
+528. Notes per target (festival push, new branch, etc.)
+529. Edit or delete any target, with undo on delete
+530. Day-of-month progress indicator alongside sales progress
+531. Multiple targets can run at the same time for the same month
+532. Targets survive restore and are part of the backup file
+
+### Shop tasks & reminders (`/tasks`)
+
+533. Simple task list built for shop routine work
+534. Quick-add box: type and press Enter
+535. Eight ready-made shop task suggestions (bank deposit, GST filing, expiry check…)
+536. Priority levels: high / normal / low with colour coding
+537. Due dates with overdue highlighting
+538. Repeating tasks: daily, weekly or monthly
+539. Completing a repeating task auto-creates the next occurrence
+540. Assign a task to a staff member by name
+541. Detail / note field for instructions
+542. Tabs for Open, Due today and Completed
+543. Counters for open, due-today, overdue and completed
+544. Smart sort: nearest due date first, then priority
+545. One-tap complete / un-complete checkbox
+546. Delete with undo
+547. Bulk clear of completed tasks
+548. Fully offline, included in backup and restore
+
+### Customer-facing display (`/display`)
+
+549. Second-screen customer display designed for a tablet or spare monitor
+550. Live mirror of the POS cart across browser tabs and windows
+551. Auto refresh every second — no setup, no pairing
+552. Open-in-new-window button for a dedicated display device
+553. True fullscreen mode for a kiosk look
+554. Large "last scanned item" panel so customers can verify each item
+555. Scrollable item list with quantity, unit and line total
+556. Running totals: items, discount, tax and round-off
+557. Giant total-payable figure in the accent colour
+558. Live UPI QR code that updates with the exact bill amount
+559. Payee VPA shown under the QR for trust
+560. "Aapne itna bachaya" savings banner when discounts apply
+561. Shop name, tagline, address and live clock header
+562. Friendly welcome screen when the cart is empty
+563. Pure AMOLED-black design that looks premium on any screen
+564. Works offline like the rest of the app
+
+### Digital menu & QR catalogue (`/menu`)
+
+565. Build a customer-facing menu or price list straight from your stock
+566. Auto-grouped by category with clean section headings
+567. 1, 2 or 3 column layouts for different paper and screen sizes
+568. Search filter to include only the items you want
+569. Category filter for a single-section menu
+570. Hide out-of-stock items with one toggle
+571. Favourites-only mode for a short "best sellers" menu
+572. Optional item codes / barcodes printed next to each item
+573. Custom menu title (different from the shop name)
+574. Live in-app preview of exactly what will print
+575. Print-ready A4 output with a light theme for paper
+576. Download the menu as a standalone, self-contained HTML file
+577. Responsive menu file — looks right on a customer's phone too
+578. WhatsApp the whole menu as formatted text
+579. QR code generator pointing at any link (your hosted menu)
+580. QR preview at 320px with instant regeneration as you type the link
+581. Save the QR as a PNG
+582. Printable table-tent / counter card with the QR and shop name
+583. Step-by-step Hinglish instructions for hosting and sharing the menu
+584. Item count, section count and favourites stats
+
+### Smart auto reorder (`/autopo`)
+
+585. Analyses real sales velocity to tell you what to buy
+586. Configurable sales-history window (default 30 days)
+587. Configurable stock-cover target (default 21 days)
+588. Per-product sold quantity, per-day rate and days-of-cover left
+589. Suggested order quantity that accounts for current stock and low-stock level
+590. Reason shown for every suggestion (out of stock, below low level, low cover)
+591. "Only low / out of stock" toggle, or plan a full top-up
+592. Suggestions grouped by vendor, biggest lists first
+593. Vendor filter, plus an Unassigned bucket for products with no supplier
+594. Editable order quantity on every line
+595. Skip a line without losing the rest of the plan
+596. Live purchase value of the whole plan
+597. Value per vendor group before you commit
+598. One-click **Create PO** per vendor — a real draft purchase order
+599. **Create all POs** to raise every vendor order at once
+600. Auto-generated PO number and a note recording the formula used
+601. WhatsApp the order list straight to the vendor's number
+602. CSV export of the full reorder plan
+603. Out-of-stock-and-selling counter so nothing profitable stays empty
+604. Days-of-cover colour warning under 7 days
+605. Reset button to rebuild suggestions from scratch
+606. Activity-log entry for every auto-generated PO
+
+### WhatsApp marketing campaigns (`/campaigns`)
+
+607. Campaign screen for targeted WhatsApp marketing
+608. Seven ready-made customer segments
+609. VIP segment with an adjustable minimum-spend threshold
+610. Lapsed-customer segment with an adjustable inactivity window
+611. Birthday-today segment pulled from customer records
+612. Outstanding-dues segment for polite payment nudges
+613. Points-to-redeem segment to bring loyalty members back
+614. New-customers (last 30 days) segment
+615. Everyone segment, automatically skipping blocked customers
+616. Six pre-written Hinglish message templates
+617. Personalisation variables: name, full name, shop, phone, due, points, spend
+618. Live preview of the message rendered for a real customer
+619. Character counter and copy-to-clipboard
+620. Send to a single customer with one tap
+621. Bulk send: opens WhatsApp for up to 20 customers, staggered so nothing is blocked
+622. Sent markers so you know who has already been messaged
+623. Audience list with spend, visits, points, dues and last visit
+624. Segment stats: size, average spend and lifetime revenue
+625. CSV export of the segment including each personalised message
+626. Works with WhatsApp Web on desktop and the app on mobile
+
+### Platform & plumbing
+
+627. Database schema upgraded to **v5** with four new stores (gift cards, write-offs, targets, tasks)
+628. 31 tables now covered by backup, restore and the compressed backup file
+629. Four new live-query hooks so new screens update instantly across tabs
+630. Nine new lazy-loaded routes — first paint stays fast
+631. Nine new navigation entries, grouped logically in the sidebar and command palette
+632. New screens are searchable from the ⌘K command palette
+633. All new pages follow the same AMOLED-black, mobile-first design system
+634. Every new screen is fully responsive from 360px phones to desktop
+635. Type-safe throughout — zero TypeScript errors in the build
+636. Service worker bumped to v11.0 so all devices update cleanly
+
+### What-if lab — pricing, margin & breakeven (`/simulator`)
+
+637. Business simulator built on your real last-30-days numbers
+638. Price-change slider (−30% to +30%) with instant profit impact
+639. Volume-change slider to model a busy or slow month
+640. Purchase-cost slider for supplier price hikes
+641. Extra fixed-cost input (new staff, new rent) in the same scenario
+642. Before vs after comparison of revenue, COGS and profit
+643. Verdict line in Hinglish: profit kitna badhega ya ghatega
+644. New gross-margin percentage for the scenario
+645. One-tap preset scenarios (+5% price −5% volume, push volume, supplier hike)
+646. Reset button to clear all levers
+647. Margin calculator tab: cost, selling price, GST and target margin
+648. Handles both tax-inclusive and tax-extra pricing automatically
+649. Shows base price, profit per unit, margin % and markup %
+650. GST amount broken out per unit
+651. Reverse calculation: the exact price needed for a target margin
+652. Catalogue-wide average margin and below-cost item count for context
+653. Breakeven tab using your real gross margin
+654. Monthly, daily and per-bill breakeven figures
+655. Quick fixed-cost presets (₹30k / ₹60k / ₹1L / ₹2L)
+656. Above / below breakeven verdict with the exact gap
+657. Discount-impact tab: how much extra you must sell to fund a discount
+658. Warns when a discount is larger than your margin (loss on every bill)
+659. Profit per ₹100 bill shown before and after the discount
+660. Everything recalculates instantly, fully offline
+
+### Customer feedback & NPS (`/feedback`)
+
+661. Feedback screen with proper Net Promoter Score tracking
+662. 0–10 NPS picker with promoter / passive / detractor colouring
+663. Separate 1–5 star rating
+664. Live NPS score calculated across all responses
+665. Average star rating headline
+666. Promoter percentage and open-complaint counters
+667. Eight feedback tags (service, price, quality, staff, waiting time…)
+668. Top-tags summary so you see the repeating problem instantly
+669. Free-text comment for what the customer actually said
+670. Link feedback to a customer record or keep it as walk-in
+671. Link feedback to a recent bill for full context
+672. Source tracking: counter, WhatsApp, QR or phone call
+673. "Needs follow-up" tab listing unresolved detractors
+674. Mark a complaint resolved once you have fixed it
+675. One-tap WhatsApp reply with a tone-appropriate pre-written message
+676. Delete feedback with undo
+677. CSV export of all feedback for deeper analysis
+678. Google review QR generator from any review link
+679. Printable counter card with the review QR
+680. New `feedback` store (database schema v6), included in backups
+681. Activity log entry for every feedback captured
+
+### Dashboard & platform additions
+
+682. New **Aaj ka focus** panel on the dashboard
+683. Monthly revenue target progress shown right on the home screen
+684. Pace marker on the dashboard target bar (ahead / behind today)
+685. Tasks-due-today list on the dashboard with priority flags
+686. Open-task counter with one-tap jump to the task board
+687. Focus panel hides itself when no target and no tasks are set
+688. Eleven new screens in total this release, all lazy-loaded
+689. Navigation regrouped so Money / Relations / Ops stay readable
+690. Every new screen reachable from the ⌘K command palette
+691. Database schema now at **v6** with 32 backed-up tables
+692. Full TypeScript type-check and production build pass with zero errors
+693. Service worker bumped so every installed device updates itself
+694. README and FEATURES documentation refreshed for v11
+
+### Gift card payments at the POS
+
+695. Gift cards & wallets are now accepted as payment at the POS
+696. Wallet payment mode asks for a card code and validates it live
+697. Card lookup checks that the card exists, is active and is not expired
+698. Balance is shown before you confirm the payment
+699. Full-cover case: card pays the whole bill and shows the remaining balance
+700. Partial-cover case: app tells you exactly how much to collect separately
+701. Card balance is deducted and a redeem entry is written to its history on confirm
+702. Card code can be typed or scanned, Enter checks it instantly
+703. Loyalty liability on the Gift & Wallet screen updates the moment a card is used
+
+**Total: 703 documented features.**
+

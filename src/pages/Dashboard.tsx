@@ -8,7 +8,7 @@ import {
   IndianRupee, TrendingUp, ShoppingBag, Users, AlertTriangle, PackageX, CalendarClock,
   Percent, ArrowUpRight, ArrowDownRight, Zap,
 } from 'lucide-react';
-import { useSales, useCustomers, useExpenses, useOrders, useSubscriptions } from '@/hooks/useData';
+import { useSales, useCustomers, useExpenses, useOrders, useSubscriptions, useTargets, useTasks } from '@/hooks/useData';
 import { money, moneyShort, num, dayKey, rangeFor, ago, cx } from '@/lib/format';
 import { stockState, expiryState } from '@/lib/calc';
 import { Card, Stat, SectionTitle, Tabs, Badge, Empty } from '@/components/ui';
@@ -26,6 +26,21 @@ export default function Dashboard() {
   const liveOrderList = useOrders() || [];
   const subs = useSubscriptions() || [];
   const [period, setPeriod] = useState<'today' | '7d' | '30d' | '90d'>('7d');
+  const targetList = useTargets() || [];
+  const taskList = useTasks() || [];
+
+  // --- Today's focus: month target progress + tasks due ---
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthTarget = targetList.find((t: any) => t.period === monthKey && t.scope === 'shop' && t.metric === 'revenue');
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  const monthRevenue = sales.filter((x: any) => x.ts >= monthStart && x.status !== 'void').reduce((a: number, x: any) => a + x.total, 0);
+  const targetPct = monthTarget ? Math.min(100, (monthRevenue / Math.max(1, monthTarget.value)) * 100) : 0;
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const dayOfMonth = new Date().getDate();
+  const expectedPct = (dayOfMonth / daysInMonth) * 100;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const openTasks = taskList.filter((t: any) => !t.done);
+  const tasksDue = openTasks.filter((t: any) => t.due && t.due <= todayStr);
 
   const liveOrders = liveOrderList.filter((o: any) => !['delivered', 'cancelled'].includes(o.status));
   const dueSubs = subs.filter((x: any) => x.active && x.nextDue <= new Date().toISOString().slice(0, 10));
@@ -98,6 +113,42 @@ export default function Dashboard() {
           <Link to="/pos" className="btn-primary"><Zap size={15} /> New Sale</Link>
         </div>
       </div>
+
+      {(monthTarget || tasksDue.length > 0) && (
+        <Card>
+          <SectionTitle title="Aaj ka focus" sub="Mahine ka target aur aaj ke kaam" />
+          <div className="grid gap-3 lg:grid-cols-2">
+            {monthTarget && (
+              <Link to="/targets" className="rounded-xl border border-line p-3 hover:border-brand/40">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-ink3">Monthly revenue target</span>
+                  <Badge tone={targetPct >= expectedPct ? 'ok' : 'bad'}>{targetPct.toFixed(0)}%</Badge>
+                </div>
+                <p className="mt-1 font-mono text-lg font-extrabold text-ink">{moneyShort(monthRevenue, s.currency)} <span className="text-xs font-normal text-ink3">of {moneyShort(monthTarget.value, s.currency)}</span></p>
+                <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-surface2">
+                  <div className={cx('h-full rounded-full', targetPct >= expectedPct ? 'bg-ok' : 'bg-warn')} style={{ width: `${targetPct}%` }} />
+                  <div className="absolute top-0 h-full w-[2px] bg-ink3/60" style={{ left: `${expectedPct}%` }} />
+                </div>
+                <p className="mt-1 text-[10px] text-ink3">{targetPct >= expectedPct ? 'Pace se aage 🎉' : `Pace se ${(expectedPct - targetPct).toFixed(0)}% peeche`}</p>
+              </Link>
+            )}
+            <Link to="/tasks" className="rounded-xl border border-line p-3 hover:border-brand/40">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-ink3">Tasks due today</span>
+                <Badge tone={tasksDue.length ? 'warn' : 'ok'}>{num(tasksDue.length)}</Badge>
+              </div>
+              {tasksDue.length === 0 ? <p className="mt-2 text-xs text-ink3">Aaj koi pending kaam nahi 🎉</p> : (
+                <ul className="mt-1.5 space-y-1">
+                  {tasksDue.slice(0, 4).map((t: any) => (
+                    <li key={t.id} className="truncate text-xs text-ink">• {t.title} {t.priority === 'high' && <span className="text-bad">(high)</span>}</li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1 text-[10px] text-ink3">{num(openTasks.length)} open tasks total</p>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Link to="/orders" className={cx('card card-hover flex items-center gap-2 p-3', liveOrders.length && 'ring-1 ring-brand/40')}>

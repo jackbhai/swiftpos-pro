@@ -4,7 +4,9 @@ import { Modal, Field, Input } from '@/components/ui';
 import UpiPay from './UpiPay';
 import { money, cx } from '@/lib/format';
 import { useSettings } from '@/store/settings';
-import type { PayMode, SplitPart } from '@/db/types';
+import type { PayMode, SplitPart, GiftCard } from '@/db/types';
+import { db } from '@/db/db';
+import { toast } from '@/store/ui';
 
 const MODES: { id: PayMode; label: string; icon: any }[] = [
   { id: 'cash', label: 'Cash', icon: Banknote },
@@ -24,7 +26,32 @@ export default function PaymentModal({ open, onClose, total, onConfirm, hasCusto
   const [tendered, setTendered] = useState('');
   const [splits, setSplits] = useState<SplitPart[]>([{ mode: 'cash', amount: 0 }, { mode: 'upi', amount: 0 }]);
 
-  useEffect(() => { if (open) { setMode('cash'); setTendered(''); setSplits([{ mode: 'cash', amount: 0 }, { mode: 'upi', amount: 0 }]); } }, [open]);
+  const [cardCode, setCardCode] = useState('');
+  const [card, setCard] = useState<GiftCard | null>(null);
+
+  useEffect(() => { if (open) { setMode('cash'); setTendered(''); setCardCode(''); setCard(null); setSplits([{ mode: 'cash', amount: 0 }, { mode: 'upi', amount: 0 }]); } }, [open]);
+
+  const lookupCard = async () => {
+    const code = cardCode.trim().toUpperCase();
+    if (!code) return;
+    const found = await db.giftCards.where('code').equals(code).first();
+    if (!found) { setCard(null); return toast('Card code nahi mila', 'err'); }
+    if (!found.active) { setCard(null); return toast('Ye card active nahi hai', 'err'); }
+    if (found.expiry && new Date(found.expiry).getTime() < Date.now()) { setCard(null); return toast('Card expire ho chuka hai', 'err'); }
+    setCard(found);
+    toast(`Balance ${money(found.balance, s.currency)}`);
+  };
+
+  const redeemCard = async () => {
+    if (!card) return;
+    const use = Math.min(card.balance, total);
+    const bal = +(card.balance - use).toFixed(2);
+    await db.giftCards.update(card.id, {
+      balance: bal,
+      history: [...(card.history || []), { ts: Date.now(), type: 'redeem' as const, amount: use, ref: 'POS bill' }],
+    });
+    toast(`${money(use, s.currency)} card se cut hua · balance ${money(bal, s.currency)}`);
+  };
 
   const tenderNum = parseFloat(tendered || '0');
   const change = tenderNum - total;
@@ -40,7 +67,7 @@ export default function PaymentModal({ open, onClose, total, onConfirm, hasCusto
     <Modal open={open} onClose={onClose} title="Take payment"
       footer={
         <button disabled={!ready} className="btn-primary w-full py-3 text-base"
-          onClick={() => onConfirm(mode, mode === 'cash' && tendered ? tenderNum : undefined, mode === 'split' ? splits.filter((x) => +x.amount > 0) : undefined)}>
+          onClick={async () => { if (mode === 'wallet' && card) await redeemCard(); onConfirm(mode, mode === 'cash' && tendered ? tenderNum : undefined, mode === 'split' ? splits.filter((x) => +x.amount > 0) : undefined); }}>
           Confirm {money(total, s.currency)}
         </button>
       }>
@@ -99,6 +126,25 @@ export default function PaymentModal({ open, onClose, total, onConfirm, hasCusto
 
       {(mode === 'upi' || (mode === 'split' && splits.some((x) => x.mode === 'upi'))) && s.showUpiQrOnPayment && (
         <div className="mt-4"><UpiPay amount={mode === 'upi' ? total : splits.filter((x) => x.mode === 'upi').reduce((t, x) => t + (+x.amount || 0), 0)} note="Bill payment" /></div>
+      )}
+
+      {mode === 'wallet' && (
+        <div className="mt-4 space-y-2">
+          <Field label="Gift card / wallet code (optional)">
+            <div className="flex gap-2">
+              <Input value={cardCode} onChange={(e) => setCardCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === 'Enter' && lookupCard()} placeholder="e.g. GC-8K2M-4QT9" />
+              <button className="btn-soft" onClick={lookupCard}>Check</button>
+            </div>
+          </Field>
+          {card && (
+            <div className={cx('rounded-xl border p-3 text-xs', card.balance >= total ? 'border-ok/30 bg-ok/10 text-ok' : 'border-warn/30 bg-warn/10 text-warn')}>
+              {card.kind} · balance <b>{money(card.balance, s.currency)}</b>
+              {card.balance >= total
+                ? ` — pura bill card se cut ho jaega, ${money(card.balance - total, s.currency)} bachega.`
+                : ` — sirf ${money(card.balance, s.currency)} cut hoga, baaki ${money(total - card.balance, s.currency)} alag se lijiye.`}
+            </div>
+          )}
+        </div>
       )}
 
       {mode === 'credit' && <p className="mt-4 rounded-xl border border-warn/30 bg-warn/10 p-3 text-xs text-warn">This amount will be added to the customer's outstanding credit balance.</p>}

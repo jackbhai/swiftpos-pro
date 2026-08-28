@@ -4,6 +4,7 @@ import {
   Undo2, FileText, CalendarCheck, ClipboardList, MessageCircle,
   BookUser, ChefHat, CalendarClock, CookingPot, Repeat, Sparkles,
   Store, Wrench, CalendarDays, FileSpreadsheet, Stethoscope,
+  Star, FlaskConical, Megaphone, Gift, IndianRupee, PackageX, Target, CheckSquare, Monitor, BookOpen, Wand2,
 } from 'lucide-react';
 
 export interface NavItem { path: string; label: string; icon: any; group: string; hint?: string }
@@ -27,6 +28,17 @@ export const NAV: NavItem[] = [
   { path: '/quotes', label: 'Quotes', icon: FileText, group: 'Money', hint: 'Estimates & proforma' },
   { path: '/dayclose', label: 'Day Close', icon: CalendarCheck, group: 'Money', hint: 'Z-report & cash count' },
   { path: '/offers', label: 'Offers', icon: Ticket, group: 'Money', hint: 'Coupons & loyalty' },
+  { path: '/feedback', label: 'Feedback', icon: Star, group: 'Relations', hint: 'Ratings, NPS & complaints' },
+  { path: '/campaigns', label: 'Campaigns', icon: Megaphone, group: 'Relations', hint: 'WhatsApp marketing & segments' },
+  { path: '/loyalty', label: 'Gift & Wallet', icon: Gift, group: 'Money', hint: 'Gift cards, wallets & vouchers' },
+  { path: '/pricing', label: 'Price Lists', icon: IndianRupee, group: 'Money', hint: 'Rate cards & customer pricing' },
+  { path: '/simulator', label: 'What-if Lab', icon: FlaskConical, group: 'Money', hint: 'Pricing, margin & breakeven simulator' },
+  { path: '/targets', label: 'Targets', icon: Target, group: 'Money', hint: 'Monthly & staff goals' },
+  { path: '/autopo', label: 'Auto Reorder', icon: Wand2, group: 'Relations', hint: 'Smart purchase suggestions' },
+  { path: '/menu', label: 'Digital Menu', icon: BookOpen, group: 'Ops', hint: 'QR menu & price card' },
+  { path: '/display', label: 'Customer Screen', icon: Monitor, group: 'Ops', hint: 'Second display for customers' },
+  { path: '/writeoff', label: 'Write-off', icon: PackageX, group: 'Ops', hint: 'Damage, expiry & wastage' },
+  { path: '/tasks', label: 'Tasks', icon: CheckSquare, group: 'Ops', hint: 'To-do & reminders' },
   { path: '/labels', label: 'Labels', icon: Tag, group: 'Ops', hint: 'Barcode & price tags' },
   { path: '/stocktake', label: 'Stock Take', icon: ClipboardList, group: 'Ops', hint: 'Physical count & audit' },
   { path: '/reminders', label: 'Reminders', icon: MessageCircle, group: 'Ops', hint: 'Bulk WhatsApp dues' },

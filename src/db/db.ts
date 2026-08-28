@@ -3,7 +3,8 @@ import type {
   Product, Sale, Customer, Vendor, PurchaseOrder, Expense, StockLog,
   Activity, HeldBill, Coupon, Staff, Shift, Table, Reservation, CustomTemplate, Quote,
   LedgerEntry, Order, Attendance, PayrollRule, Recipe, Subscription,
-  Branch, Transfer, ServiceJob, Appointment, PriceList,
+  Branch, Transfer, ServiceJob, Appointment, PriceList, GiftCard, WriteOff, Target, Task,
+  Feedback,
 } from './types';
 
 export class SwiftDB extends Dexie {
@@ -34,6 +35,11 @@ export class SwiftDB extends Dexie {
   serviceJobs!: DexTable<ServiceJob, string>;
   appointments!: DexTable<Appointment, string>;
   priceLists!: DexTable<PriceList, string>;
+  giftCards!: DexTable<GiftCard, string>;
+  writeOffs!: DexTable<WriteOff, string>;
+  targets!: DexTable<Target, string>;
+  tasks!: DexTable<Task, string>;
+  feedback!: DexTable<Feedback, string>;
 
   constructor() {
     super('swiftpos-pro-v7');
@@ -71,6 +77,16 @@ export class SwiftDB extends Dexie {
       serviceJobs: 'id, jobNo, ts, status, customerId',
       appointments: 'id, ts, status, staffId, customerId',
       priceLists: 'id, name, active',
+    });
+    this.version(5).stores({
+      giftCards: 'id, code, kind, active, issuedTo',
+      writeOffs: 'id, ts, productId, reason',
+      targets: 'id, period, scope, refId',
+      tasks: 'id, done, due, priority',
+    });
+
+    this.version(6).stores({
+      feedback: 'id, ts, score, resolved, customerId',
     });
   }
 }
