@@ -1,5 +1,5 @@
 /* SwiftPOS Pro service worker — offline-first shell caching. */
-const VERSION = 'swiftpos-v11-1';
+const VERSION = 'swiftpos-v12-0';
 const CORE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

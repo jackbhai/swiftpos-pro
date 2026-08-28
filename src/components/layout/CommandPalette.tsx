@@ -3,10 +3,11 @@ import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Search, CornerDownLeft } from 'lucide-react';
-import { NAV } from './nav';
+import { NAV, visibleNav } from './nav';
 import { useUI } from '@/store/ui';
 import { useCustomers } from '@/hooks/useData';
 import { useCart } from '@/store/cart';
+import { useShop, useSettings } from '@/store/settings';
 import { fuzzyScore } from '@/lib/calc';
 import { money, cx } from '@/lib/format';
 
@@ -18,12 +19,15 @@ export default function CommandPalette() {
   const { products } = useCatalog();
   const customers = useCustomers();
   const cart = useCart();
+  const { system } = useShop();
+  const showAllScreens = useSettings((x) => x.showAllScreens);
+  const sysScreens = system.screens;
 
   useEffect(() => { if (paletteOpen) { setQ(''); setI(0); } }, [paletteOpen]);
 
   const results = useMemo(() => {
     const items: { id: string; label: string; sub: string; kind: string; run: () => void }[] = [];
-    NAV.forEach((n) => items.push({ id: n.path, label: n.label, sub: n.hint ?? 'Page', kind: 'Go', run: () => nav(n.path) }));
+    visibleNav(sysScreens, showAllScreens).forEach((n) => items.push({ id: n.path, label: n.label, sub: n.hint ?? 'Page', kind: 'Go', run: () => nav(n.path) }));
     (products || []).forEach((p: any) => items.push({
       id: p.id, label: p.name, sub: `${money(p.price)} · stock ${p.stock}`, kind: 'Add',
       run: () => { cart.add(p); toast(`${p.name} added to cart`); nav('/pos'); },

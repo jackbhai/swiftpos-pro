@@ -4,7 +4,7 @@ import type {
   Activity, HeldBill, Coupon, Staff, Shift, Table, Reservation, CustomTemplate, Quote,
   LedgerEntry, Order, Attendance, PayrollRule, Recipe, Subscription,
   Branch, Transfer, ServiceJob, Appointment, PriceList, GiftCard, WriteOff, Target, Task,
-  Feedback,
+  Feedback, SyncState, SyncLog, DeviceRec,
 } from './types';
 
 export class SwiftDB extends Dexie {
@@ -40,6 +40,9 @@ export class SwiftDB extends Dexie {
   targets!: DexTable<Target, string>;
   tasks!: DexTable<Task, string>;
   feedback!: DexTable<Feedback, string>;
+  syncState!: DexTable<SyncState, string>;
+  syncLog!: DexTable<SyncLog, string>;
+  devices!: DexTable<DeviceRec, string>;
 
   constructor() {
     super('swiftpos-pro-v7');
@@ -87,6 +90,12 @@ export class SwiftDB extends Dexie {
 
     this.version(6).stores({
       feedback: 'id, ts, score, resolved, customerId',
+    });
+
+    this.version(7).stores({
+      syncState: 'table',
+      syncLog: 'id, ts, level, table',
+      devices: 'id, lastSeen',
     });
   }
 }

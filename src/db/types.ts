@@ -82,6 +82,7 @@ export interface Sale {
   pointsRedeemed?: number;
   shiftId?: ID;
   channel?: 'counter' | 'delivery' | 'takeaway' | 'online';
+  meta?: Record<string, any>;   // system-specific capture (table, Rx, IMEI, vehicle…)
   synced?: boolean;
 }
 
@@ -263,4 +264,17 @@ export interface Feedback {
   rating: number;           // 1-5 stars
   comment?: string; tags?: string[]; saleId?: ID; billNo?: string;
   resolved?: boolean; reply?: string; source: 'counter' | 'whatsapp' | 'qr' | 'phone';
+}
+
+export interface SyncState {
+  table: string; lastPush: number; lastPull: number;
+  pushed: number; pulled: number; failed: number; lastError?: string;
+}
+export interface SyncLog {
+  id: ID; ts: number; level: 'info' | 'warn' | 'error' | 'fix';
+  table?: string; code?: string; message: string; fix?: string; fixed?: boolean; attempt?: number;
+}
+export interface DeviceRec {
+  id: ID; name: string; platform: string; version: string;
+  lastSeen: number; pushes: number; pulls: number; owner?: string; current?: boolean;
 }

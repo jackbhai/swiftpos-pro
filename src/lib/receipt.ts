@@ -4,6 +4,8 @@ import { db } from '@/db/db';
 import { money, dt } from './format';
 import { TEMPLATES, renderTemplate, buildContext, type TemplateDef } from './templates';
 import { upiLink, qrDataUrl } from './upi';
+import { getSystem } from './systems';
+import { useSettings } from '@/store/settings';
 
 export { TEMPLATES } from './templates';
 
@@ -24,7 +26,18 @@ export async function getTemplate(id: string): Promise<TemplateDef> {
 }
 
 /** Render a sale into printable HTML using a template id. */
+export function metaText(sale: Sale): string {
+  if (!sale.meta) return '';
+  const sys = getSystem((useSettings.getState() as any).systemId);
+  return sys.capture
+    .filter((f) => f.printOnBill && f.scope === 'bill' && sale.meta![f.key])
+    .map((f) => `${f.label}: ${sale.meta![f.key]}`)
+    .join(' · ');
+}
+
 export async function renderReceipt(sale: Sale, s: Settings, templateId?: string, opts: { copyLabel?: string; upi?: UpiAccount | null } = {}) {
+  const mt = metaText(sale);
+  if (mt) sale = { ...sale, note: [sale.note, mt].filter(Boolean).join(' · ') };
   const tpl = await getTemplate(templateId ?? s.defaultTemplate);
   const upi = opts.upi ?? s.upiAccounts.find((u) => u.isDefault && u.active) ?? s.upiAccounts.find((u) => u.active) ?? null;
   let upiQr = '';

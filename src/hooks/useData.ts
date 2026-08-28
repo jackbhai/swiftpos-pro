@@ -31,3 +31,6 @@ export const useWriteOffs = () => useLiveQuery(() => db.writeOffs.orderBy('ts').
 export const useTargets = () => useLiveQuery(() => db.targets.toArray(), [], [] as any[]);
 export const useTasks = () => useLiveQuery(() => db.tasks.toArray(), [], [] as any[]);
 export const useFeedback = () => useLiveQuery(() => db.feedback.orderBy('ts').reverse().limit(400).toArray(), [], [] as any[]);
+export const useSyncState = () => useLiveQuery(() => db.syncState.toArray(), [], [] as any[]);
+export const useSyncLog = () => useLiveQuery(() => db.syncLog.orderBy('ts').reverse().limit(120).toArray(), [], [] as any[]);
+export const useDevices = () => useLiveQuery(() => db.devices.orderBy('lastSeen').reverse().toArray(), [], [] as any[]);

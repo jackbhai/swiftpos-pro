@@ -4,9 +4,11 @@ import {
   Menu, Search, Calculator as CalcIcon, Sun, Moon, Wifi, WifiOff, Bell, X, ShoppingCart, Lock,
   Download, RefreshCw,
 } from 'lucide-react';
-import { NAV, BOTTOM_NAV } from './nav';
+import { NAV, BOTTOM_NAV, visibleNav } from './nav';
 import { useUI } from '@/store/ui';
-import { useSettings, applyTheme } from '@/store/settings';
+import { useSettings, useShop, applyTheme } from '@/store/settings';
+import { useCloud } from '@/store/cloud';
+import { startAutoSync, stopAutoSync, heartbeat } from '@/lib/cloud/engine';
 import { useCart } from '@/store/cart';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
@@ -23,6 +25,13 @@ import LockScreen from './LockScreen';
 export default function AppShell() {
   const { sidebarOpen, setSidebar, setPalette, setCalc, online, setOnline, setLocked } = useUI();
   const settings = useSettings();
+  const cloudOn = useCloud((c) => c.enabled);
+  const cloudAuto = useCloud((c) => c.autoSync);
+  useEffect(() => {
+    heartbeat();
+    if (cloudOn && cloudAuto) startAutoSync(); else stopAutoSync();
+    return () => stopAutoSync();
+  }, [cloudOn, cloudAuto]);
   const cart = useCart();
   const [pwa, setPwa] = useState({ install: false, update: false });
   // Warm the most-used routes while the browser is idle — navigation feels instant.
@@ -155,14 +164,17 @@ function Brand() {
 }
 
 function NavList() {
-  const groups = Array.from(new Set(NAV.map((n) => n.group)));
+  const { system } = useShop();
+  const showAll = useSettings((x) => x.showAllScreens);
+  const nav = visibleNav(system.screens, showAll);
+  const groups = Array.from(new Set(nav.map((n) => n.group)));
   return (
     <div className="flex-1 space-y-4 px-2.5 pb-6">
       {groups.map((g) => (
         <div key={g}>
           <p className="px-2.5 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-ink3">{g}</p>
           <div className="space-y-0.5">
-            {NAV.filter((n) => n.group === g).map((n) => {
+            {nav.filter((n) => n.group === g).map((n) => {
               const Icon = n.icon;
               return (
                 <NavLink key={n.path} to={n.path} end={n.path === '/'}

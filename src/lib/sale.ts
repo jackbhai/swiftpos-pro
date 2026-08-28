@@ -2,6 +2,7 @@ import { db, uid, addStockLog, logActivity } from '@/db/db';
 import type { CartLine, PayMode, Sale, SplitPart } from '@/db/types';
 import { computeTotals } from './calc';
 import { useCart } from '@/store/cart';
+import { useBillMeta } from '@/store/billMeta';
 import { useSettings } from '@/store/settings';
 import { useSession } from '@/store/session';
 
@@ -38,6 +39,7 @@ export async function finalizeSale(opts: {
     note: cart.note || undefined, status: 'completed',
     pointsEarned, pointsRedeemed: cart.pointsRedeemed || 0,
     shiftId: session.shiftId, channel: cart.channel,
+    meta: Object.keys(useBillMeta.getState().values).length ? { ...useBillMeta.getState().values } : undefined,
   };
 
   await db.transaction('rw', [db.sales, db.products, db.customers, db.stockLogs, db.activity, db.coupons], async () => {
@@ -68,6 +70,7 @@ export async function finalizeSale(opts: {
   s.set({ invoiceNext: s.invoiceNext + 1 });
   const keepCust = s.keepCustomerAfterSale ? { id: cart.customerId, name: cart.customerName } : null;
   cart.clear();
+  useBillMeta.getState().clear();
   if (keepCust?.id) cart.setCustomer(keepCust.id, keepCust.name);
   return sale;
 }

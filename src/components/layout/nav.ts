@@ -4,7 +4,7 @@ import {
   Undo2, FileText, CalendarCheck, ClipboardList, MessageCircle,
   BookUser, ChefHat, CalendarClock, CookingPot, Repeat, Sparkles,
   Store, Wrench, CalendarDays, FileSpreadsheet, Stethoscope,
-  ListChecks, Star, FlaskConical, Megaphone, Gift, IndianRupee, PackageX, Target, CheckSquare, Monitor, BookOpen, Wand2,
+  Boxes as BoxesIcon, CloudCog, ListChecks, Star, FlaskConical, Megaphone, Gift, IndianRupee, PackageX, Target, CheckSquare, Monitor, BookOpen, Wand2,
 } from 'lucide-react';
 
 export interface NavItem { path: string; label: string; icon: any; group: string; hint?: string }
@@ -50,10 +50,19 @@ export const NAV: NavItem[] = [
   { path: '/attendance', label: 'Attendance', icon: CalendarClock, group: 'Ops', hint: 'Punch in/out & payroll' },
   { path: '/staff', label: 'Staff', icon: UserCog, group: 'Ops', hint: 'Users, shifts & PINs' },
   { path: '/activity', label: 'Activity', icon: Clock, group: 'Ops', hint: 'Audit log' },
+  { path: '/systems', label: 'Business System', icon: BoxesIcon, group: 'System', hint: '10 ready systems — restaurant, pharmacy…' },
+  { path: '/cloud', label: 'Cloud & Devices', icon: CloudCog, group: 'System', hint: 'Firebase/Supabase sync, multi-device' },
   { path: '/cleanup', label: 'Data Doctor', icon: Stethoscope, group: 'System', hint: 'Find & fix catalogue issues' },
   { path: '/settings', label: 'Settings', icon: Settings, group: 'System', hint: 'Store & preferences' },
-  { path: '/features', label: 'Feature Index', icon: ListChecks, group: 'System', hint: 'All 713 features, searchable' },
+  { path: '/features', label: 'Feature Index', icon: ListChecks, group: 'System', hint: 'All 800+ features, searchable' },
   { path: '/help', label: 'Help', icon: HelpCircle, group: 'System', hint: 'Shortcuts & guide' },
 ];
 
 export const BOTTOM_NAV = ['/', '/pos', '/inventory', '/customers', '/reports'];
+
+/** Screens allowed by the active business system (System screen can force-show all). */
+export function visibleNav(screens: string[], showAll: boolean) {
+  if (showAll) return NAV;
+  const allow = new Set([...screens, '/systems', '/settings', '/help', '/features', '/cloud', '/']);
+  return NAV.filter((n) => allow.has(n.path));
+}

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getProfile, type ShopProfile, type ShopTypeId } from '@/lib/shopProfiles';
+import { getSystem, type SystemId, type CapKey } from '@/lib/systems';
 
 export interface UpiAccount {
   id: string;
@@ -19,6 +20,9 @@ export interface BankAccount {
 
 export interface Settings {
   /* identity */
+  systemId: SystemId;
+  showAllScreens: boolean;
+  capOverrides: Partial<Record<CapKey, boolean>>;
   shopType: ShopTypeId;
   moduleOverrides: Partial<ShopProfile['modules']>;
   shopName: string; tagline: string; address: string; phone: string; phone2: string; email: string;
@@ -85,6 +89,7 @@ export interface Settings {
 }
 
 export const defaultSettings: Settings = {
+  systemId: 'kirana', showAllScreens: false, capOverrides: {},
   shopType: 'grocery', moduleOverrides: {},
   shopName: 'SwiftPOS Store', tagline: 'Fast. Offline. Yours.',
   address: 'Connaught Place, New Delhi 110001', phone: '+91 98100 00000', phone2: '',
@@ -140,6 +145,8 @@ interface SettingsStore extends Settings {
   set: (p: Partial<Settings>) => void;
   reset: () => void;
   applyShopType: (id: ShopTypeId, adoptDefaults?: boolean) => void;
+  applySystem: (id: SystemId, adoptDefaults?: boolean) => void;
+  toggleCap: (cap: CapKey, on: boolean) => void;
   addUpi: (a: Omit<UpiAccount, 'id'>) => void;
   updateUpi: (id: string, p: Partial<UpiAccount>) => void;
   removeUpi: (id: string) => void;
@@ -164,6 +171,20 @@ export const useSettings = create<SettingsStore>()(
             } as any
           : ({ shopType: id } as any));
       },
+      applySystem: (id, adoptDefaults = true) => {
+        const sys = getSystem(id);
+        const prof = getProfile(sys.base);
+        if (!adoptDefaults) { set({ systemId: id } as any); return; }
+        set({
+          systemId: id, capOverrides: {}, shopType: sys.base, moduleOverrides: {},
+          accent: sys.accent, quickCash: prof.quickCash,
+          defaultTemplate: sys.caps.includes('kot') ? 'thermal-restaurant'
+            : sys.caps.includes('prescription') ? 'thermal-pharmacy' : 'thermal-classic',
+          restaurantMode: sys.caps.includes('tables'),
+          ...sys.defaults,
+        } as any);
+      },
+      toggleCap: (cap, on) => set({ capOverrides: { ...get().capOverrides, [cap]: on } } as any),
       addUpi: (a) => {
         const list = get().upiAccounts;
         set({ upiAccounts: [...list, { ...a, id: rid(), isDefault: a.isDefault || list.length === 0 }] } as any);
@@ -193,8 +214,23 @@ export function applyTheme(s: Pick<Settings, 'theme' | 'accent' | 'density' | 'f
 export function useShop() {
   const shopType = useSettings((s) => s.shopType);
   const overrides = useSettings((s) => s.moduleOverrides);
+  const systemId = useSettings((s) => s.systemId);
+  const capOverrides = useSettings((s) => s.capOverrides) || {};
   const profile = getProfile(shopType);
-  return { profile, terms: profile.terms, modules: { ...profile.modules, ...overrides } };
+  const system = getSystem(systemId);
+  const caps = (cap: CapKey) => capOverrides[cap] ?? system.caps.includes(cap);
+  const capList = new Set<CapKey>([
+    ...system.caps.filter((c) => capOverrides[c] !== false),
+    ...(Object.keys(capOverrides) as CapKey[]).filter((c) => capOverrides[c] === true),
+  ]);
+  const modules = {
+    ...profile.modules, ...overrides,
+    tables: caps('tables'), batchExpiry: caps('batchExpiry'), prescription: caps('prescription'),
+    serialNumbers: caps('serialNumbers'), variants: caps('variants'), kitchenNote: caps('kot') || caps('modifiers'),
+    appointments: caps('appointments'), weighScale: caps('weighScale'), warranty: caps('warranty'),
+    loyalty: caps('loyalty'),
+  };
+  return { profile, system, caps, capList, terms: profile.terms, modules };
 }
 
 export function shopNow() {

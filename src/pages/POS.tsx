@@ -21,6 +21,8 @@ import ProductGrid, { ProductCard, ProductRow } from '@/components/pos/ProductGr
 import PaymentModal from '@/components/pos/PaymentModal';
 import ReceiptModal from '@/components/pos/ReceiptModal';
 import CustomerPicker from '@/components/pos/CustomerPicker';
+import SystemFields from '@/components/pos/SystemFields';
+import { useBillMeta } from '@/store/billMeta';
 import Scanner from '@/components/pos/Scanner';
 import type { Product, Sale } from '@/db/types';
 
@@ -38,7 +40,8 @@ export default function POS() {
   const customers = useCustomers() || [];
   const cart = useCart();
   const s = useSettings();
-  const { terms, modules } = useShop();
+  const { terms, modules, system } = useShop();
+  const billMeta = useBillMeta();
   const session = useSession();
 
   const [q, setQ] = useState('');
@@ -115,6 +118,12 @@ export default function POS() {
     cart.clear(); toast('Bill held'); setCartOpen(false);
   };
 
+  const openPay = () => {
+    const need = system.capture.filter((f) => f.scope === 'bill' && f.required && !billMeta.values[f.key]);
+    if (need.length) { errorSound(); return toast(`${need.map((f) => f.label).join(', ')} bharna zaroori hai`, 'err'); }
+    setPayOpen(true);
+  };
+
   const pay = async (mode: any, tendered?: number, splits?: any) => {
     try {
       const sale = await finalizeSale({ payMode: mode, tendered, splits });
@@ -143,7 +152,7 @@ export default function POS() {
   }, [products]);
 
   useHotkeys({
-    'mod+enter': (e) => { e.preventDefault(); cart.lines.length && setPayOpen(true); },
+    'mod+enter': (e) => { e.preventDefault(); cart.lines.length && openPay(); },
     'f8': (e) => { e.preventDefault(); setScanOpen(true); },
     'f9': (e) => { e.preventDefault(); doHold(); },
     'f10': (e) => { e.preventDefault(); setCustOpen(true); },
@@ -174,6 +183,7 @@ export default function POS() {
 
       {/* lines */}
       <div className="flex-1 overflow-y-auto p-3">
+        <SystemFields compact />
         {cart.lines.length === 0 ? (
           <Empty title="Cart is empty" sub={`Tap a ${terms.product.toLowerCase()} or scan a barcode to begin.`} icon={<ShoppingCart size={26} />} />
         ) : (
@@ -231,7 +241,7 @@ export default function POS() {
           <span className="text-xs font-bold uppercase tracking-wider text-ink3">Total</span>
           <span className="font-mono text-2xl font-extrabold text-brand">{money(totals.total, s.currency)}</span>
         </div>
-        <button disabled={!cart.lines.length} onClick={() => setPayOpen(true)} className="btn-primary mt-2 w-full py-3 text-base">
+        <button disabled={!cart.lines.length} onClick={openPay} className="btn-primary mt-2 w-full py-3 text-base">
           Charge {money(totals.total, s.currency)}
         </button>
       </div>

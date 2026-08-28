@@ -859,5 +859,109 @@
 712. Download the complete FEATURES.md from inside the app
 713. Works offline — the feature list ships with the app bundle
 
-**Total: 713 documented features.**
+
+## v12 — business systems + cloud sync (714 onwards)
+
+
+### v12 — 10 complete business systems (`/systems`)
+
+714. **Business System** screen: 10 ready-made, complete systems in one app
+715. Switching a system re-wires screens, wording, modules, POS fields and billing defaults
+716. Preview any system before activating: features, day workflow, extra fields, screens, defaults
+717. Navigation auto-hides screens a system does not need (Show-all toggle available)
+718. 30 capability modules that can each be forced on or off after activation
+719. Command palette respects the active system's screen list
+720. Activating a system never touches your data — only the interface adapts
+721. System-specific accent colour, POS layout, GST rate, paper size and receipt template
+722. **1. Restaurant (RMS)** — table floor, KOT, courses, modifiers, delivery channels, recipe costing
+723. RMS captures table/token, guest count (pax) and steward on every bill
+724. RMS per-line course and cooking notes flow to the kitchen slip
+725. RMS turns on service charge, packaging charge, auto-KOT and tax-extra billing
+726. **2. Pharmacy** — batch + expiry, Rx capture, schedule-H, salt search, substitutes
+727. Pharmacy bills capture doctor name, prescription number and patient age
+728. Pharmacy lines capture batch and expiry, both printed on the bill
+729. Pharmacy defaults: 12% GST, 90-day expiry alerts, list POS layout, drug terms
+730. **3. Kirana / Supermarket** — barcode speed, loose weight, khata, home delivery
+731. Kirana bills capture delivery choice and delivery area; lines capture weight
+732. **4. Retail / Fashion** — size × colour, tags, exchange window, salesman tracking
+733. Retail lines capture size and colour, bills capture the salesman
+734. **5. Electronics / Mobile** — IMEI, warranty, EMI, exchange, repair job cards
+735. Electronics makes IMEI/serial a required field and prints it on the invoice
+736. Electronics captures warranty months per line and the payment plan per bill
+737. **6. Salon / Spa / Clinic** — appointments, stylist commission, packages, memberships
+738. Salon requires a stylist per service line and records duration and membership used
+739. **7. Hardware / Building material** — bulk units, cut lengths, site delivery, credit
+740. Hardware captures site/project and vehicle number, printed on the challan
+741. **8. Bakery / Sweets** — weight billing, pre-booking, cake message, production batches
+742. Bakery captures the delivery date, cake message and weight per line
+743. **9. Cafe / QSR** — token service, size variants, add-ons, 58mm auto-print
+744. Cafe captures the token number and per-line size and add-ons
+745. **10. Auto Garage / Service centre** — vehicle history, job cards, labour + parts
+746. Garage requires vehicle number and captures odometer, make/model and labour per line
+747. Required system fields are validated before payment can be taken
+748. Captured fields are stored on the sale and printed on the receipt automatically
+749. Each system ships a documented day-workflow so staff know the exact steps
+
+### Cloud database & sync (`/cloud`)
+
+750. Connect your own cloud database — data stays yours
+751. **Firebase Firestore** adapter over REST (Project ID + Web API key, no SDK bloat)
+752. **Supabase** adapter over PostgREST with copy-paste SQL for the sync table
+753. **Custom REST API** adapter for self-hosted MySQL / Mongo / anything
+754. One-click connection test with a plain-language result message
+755. Credentials stay on the device (never leave your browser storage)
+756. Two-way, upload-only or download-only sync modes
+757. Conflict rules: newest wins, cloud wins or local wins
+758. 27 tables covered by cloud sync
+759. Delta sync using per-table cursors — only changed rows travel
+760. Configurable batch size and sync interval
+761. Background auto-sync with an on/off switch
+762. Instant sync trigger the moment the internet comes back
+763. Offline-first: everything keeps working with no connection, queue drains later
+764. Full re-upload and full re-download buttons
+765. Sync-state reset for a clean re-sync
+
+### Live sync view
+
+766. Live progress screen: kitna data cloud par gaya, kitna baaki hai
+767. Overall progress bar with synced / total counts and percentage
+768. Per-table progress bars for all 27 tables
+769. Pending, synced and failed counters per table
+770. Current phase text while syncing (which table, what action)
+771. Last-sync timestamp in plain language ("2 min ago")
+772. Records counted directly from the local database, so numbers are always true
+773. Push and pull counts tracked per table over time
+
+### Multi-device system
+
+774. Run the same shop on unlimited devices through one cloud database
+775. Automatic device registration with a stable device ID
+776. Device list showing name, platform, last-seen time and online dot
+777. Per-device upload / download counters
+778. Rename this device so counters are recognisable
+779. Remove an old device from the list
+780. Heartbeat every sync keeps the device list fresh
+781. Devices sync through the cloud so every counter sees the same list
+782. Last-write-wins merging keeps two counters from overwriting each other
+
+### Auto error doctor
+
+783. Every sync failure is classified automatically into 11 error kinds
+784. Plain-Hinglish explanation of what went wrong and what the app did about it
+785. Network errors: queued and retried automatically when internet returns
+786. Rate limits (429): batch size halved and a cooldown applied by itself
+787. Payload too large (413): heavy fields stripped and batches split
+788. Missing cloud table: auto-create attempted and the exact SQL is shown
+789. Bad request / schema errors: rows sanitised and the cursor reset, then resent
+790. Conflicts: merged with the configured conflict rule instead of failing
+791. Auth errors: flagged for the user with the exact fix instead of silent retries
+792. Exponential backoff with a 3-attempt limit per table
+793. Local IndexedDB self-repair: reopens the DB, removes corrupt rows, fixes bad stock values
+794. Automatic log pruning so the error log never grows unbounded
+795. Full sync log with info / warn / error / fix levels and auto-fixed badges
+796. One-tap "Repair local DB" button with a report of what was fixed
+797. Auto-fix can be switched off for manual control
+798. Every fix is written to the log with the table, code and attempt number
+
+**Total: 798 documented features.**
 

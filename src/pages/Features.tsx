@@ -53,7 +53,7 @@ export default function Features() {
         <Stat label="Total features" value={num(items.length)} tone="brand" icon={<ListChecks size={16} />} />
         <Stat label="Matching search" value={num(filtered.length)} tone="ok" />
         <Stat label="Sections" value={num(new Set(items.map((i) => i.section)).size)} tone="warn" />
-        <Stat label="App version" value="v11.0" tone="ok" />
+        <Stat label="App version" value="v12.0" tone="ok" />
       </div>
 
       <Card>

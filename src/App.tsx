@@ -45,6 +45,8 @@ const FeedbackPage = lazy(() => import('@/pages/Feedback'));
 const Simulator = lazy(() => import('@/pages/Simulator'));
 const Campaigns = lazy(() => import('@/pages/Campaigns'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
+const Systems = lazy(() => import('@/pages/Systems'));
+const CloudPage = lazy(() => import('@/pages/Cloud'));
 const Features = lazy(() => import('@/pages/Features'));
 const Help = lazy(() => import('@/pages/Help'));
 
@@ -95,6 +97,8 @@ export default function App() {
           <Route path="/simulator" element={<Simulator />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/systems" element={<Systems />} />
+          <Route path="/cloud" element={<CloudPage />} />
           <Route path="/features" element={<Features />} />
           <Route path="/help" element={<Help />} />
           <Route path="*" element={<Navigate to="/" replace />} />
