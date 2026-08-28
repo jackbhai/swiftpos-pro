@@ -4,7 +4,7 @@ import {
   Undo2, FileText, CalendarCheck, ClipboardList, MessageCircle,
   BookUser, ChefHat, CalendarClock, CookingPot, Repeat, Sparkles,
   Store, Wrench, CalendarDays, FileSpreadsheet, Stethoscope,
-  Star, FlaskConical, Megaphone, Gift, IndianRupee, PackageX, Target, CheckSquare, Monitor, BookOpen, Wand2,
+  ListChecks, Star, FlaskConical, Megaphone, Gift, IndianRupee, PackageX, Target, CheckSquare, Monitor, BookOpen, Wand2,
 } from 'lucide-react';
 
 export interface NavItem { path: string; label: string; icon: any; group: string; hint?: string }
@@ -52,6 +52,7 @@ export const NAV: NavItem[] = [
   { path: '/activity', label: 'Activity', icon: Clock, group: 'Ops', hint: 'Audit log' },
   { path: '/cleanup', label: 'Data Doctor', icon: Stethoscope, group: 'System', hint: 'Find & fix catalogue issues' },
   { path: '/settings', label: 'Settings', icon: Settings, group: 'System', hint: 'Store & preferences' },
+  { path: '/features', label: 'Feature Index', icon: ListChecks, group: 'System', hint: 'All 713 features, searchable' },
   { path: '/help', label: 'Help', icon: HelpCircle, group: 'System', hint: 'Shortcuts & guide' },
 ];
 
