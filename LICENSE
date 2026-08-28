@@ -1,0 +1,28 @@
+SwiftPOS Pro — Commercial Software Licence
+Copyright (c) 2026 SwiftPOS Pro. All rights reserved.
+
+1. Grant. You are granted a non-exclusive, non-transferable licence to install and
+   use SwiftPOS Pro to operate your own business, on any number of devices owned or
+   controlled by you.
+
+2. Restrictions. You may not resell, sublicense, rent, white-label or redistribute
+   the software or any derivative of it without a separate written distribution
+   agreement. You may modify the source for your own internal use only.
+
+3. Data. The software stores business data locally on your device and, if you
+   configure it, in a cloud database that you own and control. The authors have no
+   access to your data and provide no hosting.
+
+4. Warranty. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+5. Liability. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+   OTHER LIABILITY, INCLUDING LOST PROFITS OR LOST DATA, ARISING FROM THE USE OF
+   THE SOFTWARE.
+
+6. Compliance. You are solely responsible for tax, GST, drug-licence, food-safety
+   and any other regulatory compliance in your jurisdiction.
+
+Third-party components (React, Vite, Dexie, Zustand, Recharts, Tailwind CSS,
+Lucide, qrcode, html-to-image) remain under their own open-source licences.

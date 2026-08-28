@@ -963,5 +963,82 @@
 797. Auto-fix can be switched off for manual control
 798. Every fix is written to the log with the table, code and attempt number
 
-**Total: 798 documented features.**
+
+## v13 — production release (799 onwards)
+
+
+### First-run onboarding (`/welcome`)
+
+799. Five-step setup wizard shown the first time the app opens
+800. Step 1 captures shop name, phone, address, GSTIN, currency and invoice prefix
+801. Step 2 lets the owner pick one of the 10 business systems, applied instantly
+802. Step 3 imports data: own JSON/CSV file, or a Lite / Pharmacy / Full demo catalogue
+803. Step 4 sets the primary UPI ID so QR payments work from the first bill
+804. Step 5 offers an app-lock PIN with a plain-language data-safety explanation
+805. Progress bar with step names and back / next navigation
+806. Skip-setup escape hatch for power users
+807. Validation stops the wizard until the shop name is entered
+808. Finishing seeds demo data only when the catalogue is still empty
+809. Onboarding state is remembered, so the wizard never nags again
+
+### Diagnostics & support (`/diagnostics`)
+
+810. Support screen built for phone/WhatsApp troubleshooting
+811. Shows app version, git commit and exact build time compiled into the bundle
+812. Device storage usage vs quota with a colour-coded bar
+813. One-tap request for persistent storage so the browser cannot evict shop data
+814. Detects whether the app is installed (standalone) or running in a browser tab
+815. Online/offline and service-worker status
+816. Live row counts for every major table
+817. Recent errors and auto-fixes with timestamps
+818. Copy-report button producing a complete text diagnostic for support
+819. Run self-repair on the local database from the same screen
+820. Backup-now button so support work never risks data
+
+### Reliability & crash handling
+
+821. Global runtime-error capture written to the on-device log
+822. Unhandled promise rejections captured the same way
+823. Crash screen now logs the crash before showing the fallback UI
+824. Crash screen offers backup download and a repair-and-reload action
+825. Persistent storage requested automatically at startup
+826. No telemetry leaves the device — all logs stay local
+
+### Quality gates & CI
+
+827. Vitest test suite with 38 automated tests
+828. Billing maths covered: tax-inclusive, tax-exclusive, discounts, coupons, charges, rounding, profit
+829. Business-system integrity tests: 10 systems, unique ids, valid screens, well-formed capture fields
+830. Domain rules asserted (RMS table, pharmacy Rx, electronics IMEI required, garage vehicle required)
+831. Cloud error-doctor tests for all major failure classes
+832. Formatting and CSV-escaping tests
+833. `npm run verify` runs typecheck + tests + build in one command
+834. CI workflow runs on every push and pull request
+835. Deploy workflow now blocks release unless typecheck and tests pass
+836. Bundle-size report printed in CI
+
+### Build & performance
+
+837. Vendor code split into react / charts / data / media chunks for faster first paint
+838. Source maps disabled and debugger statements dropped in production builds
+839. Build metadata (version, commit, timestamp) injected at compile time
+840. Service worker version bumped so every device self-updates
+841. PWA manifest with app id, description, categories and display overrides
+842. Home-screen shortcuts: Billing, Inventory, Day close, Reports
+
+### Legal, launch & documentation
+
+843. In-app Legal centre with privacy policy, terms of use and licence tabs
+844. Privacy policy states plainly: no analytics, no trackers, no vendor backend
+845. Terms cover permitted use, backups, compliance responsibility and liability
+846. Licence tab documents editions, refund window and support channels
+847. Marketing landing page with hero, systems, features, pricing tiers and FAQ
+848. CHANGELOG.md with versioned release notes
+849. LICENSE file (commercial licence + third-party notices)
+850. SECURITY.md with cloud-hardening guidance and disclosure process
+851. SUPPORT.md with a symptom → fix table for common shop-floor issues
+852. DEPLOYMENT.md covering build, hosting headers, release and rollback
+853. LAUNCH-CHECKLIST.md tracking product, legal, GTM and ops readiness
+
+**Total: 853 documented features.**
 

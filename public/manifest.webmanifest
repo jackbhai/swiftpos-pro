@@ -1,12 +1,63 @@
 {
-  "name": "SwiftPOS Pro",
+  "name": "SwiftPOS Pro \u2014 Billing, Inventory & CRM",
   "short_name": "SwiftPOS",
+  "id": "swiftpos-pro",
+  "description": "Offline-first point of sale, inventory, khata, GST billing and analytics for 10 business types.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": [
+    "business",
+    "productivity",
+    "finance",
+    "shopping"
+  ],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='black'/%3E%3Ctext x='256' y='330' font-size='300' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='black'/%3E%3Ctext x='256' y='330' font-size='300' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='black'/%3E%3Ctext x='256' y='330' font-size='300' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New bill",
+      "short_name": "Billing",
+      "url": "./#/pos",
+      "description": "Open the POS terminal"
+    },
+    {
+      "name": "Inventory",
+      "short_name": "Stock",
+      "url": "./#/inventory"
+    },
+    {
+      "name": "Day close",
+      "short_name": "Day close",
+      "url": "./#/dayclose"
+    },
+    {
+      "name": "Reports",
+      "short_name": "Reports",
+      "url": "./#/reports"
+    }
   ]
 }

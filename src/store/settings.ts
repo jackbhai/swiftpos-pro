@@ -85,6 +85,7 @@ export interface Settings {
   density: 'compact' | 'normal' | 'cozy'; fontScale: number; animations: boolean;
 
   /* system */
+  onboarded: boolean; onboardedAt: number;
   backupReminderDays: number; lastBackup: number; autoBackupOnClose: boolean;
 }
 
@@ -138,6 +139,7 @@ export const defaultSettings: Settings = {
   notifyLowStock: true, notifyExpiry: true, notifyDues: true, dailySummary: false,
 
   theme: 'amoled', accent: 'cyan', density: 'normal', fontScale: 1, animations: true,
+  onboarded: false, onboardedAt: 0,
   backupReminderDays: 7, lastBackup: 0, autoBackupOnClose: false,
 };
 

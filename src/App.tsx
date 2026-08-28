@@ -45,6 +45,9 @@ const FeedbackPage = lazy(() => import('@/pages/Feedback'));
 const Simulator = lazy(() => import('@/pages/Simulator'));
 const Campaigns = lazy(() => import('@/pages/Campaigns'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
+const Welcome = lazy(() => import('@/pages/Welcome'));
+const Diagnostics = lazy(() => import('@/pages/Diagnostics'));
+const Legal = lazy(() => import('@/pages/Legal'));
 const Systems = lazy(() => import('@/pages/Systems'));
 const CloudPage = lazy(() => import('@/pages/Cloud'));
 const Features = lazy(() => import('@/pages/Features'));
@@ -97,6 +100,9 @@ export default function App() {
           <Route path="/simulator" element={<Simulator />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/diagnostics" element={<Diagnostics />} />
+          <Route path="/legal" element={<Legal />} />
           <Route path="/systems" element={<Systems />} />
           <Route path="/cloud" element={<CloudPage />} />
           <Route path="/features" element={<Features />} />

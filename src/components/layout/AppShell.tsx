@@ -25,6 +25,12 @@ import LockScreen from './LockScreen';
 export default function AppShell() {
   const { sidebarOpen, setSidebar, setPalette, setCalc, online, setOnline, setLocked } = useUI();
   const settings = useSettings();
+  const onboarded = useSettings((x) => x.onboarded);
+  const locPath = useLocation().pathname;
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!onboarded && locPath !== '/welcome') navigate('/welcome', { replace: true });
+  }, [onboarded, locPath]);
   const cloudOn = useCloud((c) => c.enabled);
   const cloudAuto = useCloud((c) => c.autoSync);
   useEffect(() => {

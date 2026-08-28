@@ -4,7 +4,11 @@ import { AlertTriangle, RefreshCw, Download } from 'lucide-react';
 export default class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) { return { error }; }
-  componentDidCatch(error: Error, info: any) { console.error('SwiftPOS crash:', error, info); }
+  componentDidCatch(error: Error, info: any) {
+    console.error('SwiftPOS crash:', error, info);
+    import('@/lib/cloud/doctor').then(({ logSync }) =>
+      logSync('error', `App crash: ${error.message}`, { table: 'app' })).catch(() => {});
+  }
 
   render() {
     if (!this.state.error) return this.props.children;
@@ -19,6 +23,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, { 
           <div className="flex justify-center gap-2">
             <button className="btn-primary" onClick={() => location.reload()}><RefreshCw size={15} /> Reload app</button>
             <button className="btn-ghost" onClick={async () => { const { exportBackup } = await import('@/lib/backup'); exportBackup(); }}><Download size={15} /> Backup data</button>
+            <button className="btn-ghost" onClick={async () => { const { repairLocalDb } = await import('@/lib/cloud/doctor'); await repairLocalDb(); location.reload(); }}>Repair &amp; reload</button>
           </div>
         </div>
       </div>

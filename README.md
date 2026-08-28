@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v12.0
+# ⚡ SwiftPOS Pro v13.0 — production
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -47,7 +47,26 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | 🧵 **Worker analytics** | ABC, basket affinity & velocity computed off the main thread |
 | 📤 **Bill sharing** | WhatsApp as **text or image**, plus download the bill as a PNG |
 
-Full list: [FEATURES.md](./FEATURES.md) — **800+ features**.
+Full list: [FEATURES.md](./FEATURES.md) — **854 features**.
+
+### Production status
+[![CI](https://github.com/jackbhai/swiftpos-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/jackbhai/swiftpos-pro/actions/workflows/ci.yml)
+
+Every push runs **typecheck → 38 unit tests → production build** before GitHub Pages deploys.
+
+| | |
+|---|---|
+| Setup | First-run wizard (`/welcome`) — shop, system, data, UPI, PIN |
+| Support | Diagnostics screen with copyable report + local self-repair |
+| Legal | Privacy policy, terms, licence in-app (`/legal`) + `LICENSE`, `SECURITY.md` |
+| Release | `CHANGELOG.md`, versioned service worker, `DEPLOYMENT.md`, rollback plan |
+| Launch | `LAUNCH-CHECKLIST.md`, marketing landing page at `/landing.html` |
+
+```bash
+npm ci
+npm run verify   # typecheck + tests + production build
+npm run dev      # local development
+```
 
 ### New in v12
 **10 complete business systems** (Restaurant RMS · Pharmacy · Kirana · Retail/Fashion · Electronics/Mobile · Salon/Spa · Hardware · Bakery · Cafe/QSR · Auto Garage) — pick one and the whole UI, modules, billing fields and defaults change.

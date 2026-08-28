@@ -6,6 +6,8 @@ import { download } from '@/lib/csv';
 import { downloadCSV } from '@/lib/csv';
 import { toast } from '@/store/ui';
 
+const BUILD = { version: 'v' + __APP_VERSION__, commit: __COMMIT__ };
+
 interface Item { n: number; text: string; section: string; release: string }
 
 /** In-app feature index — every documented feature of the app, searchable. */
@@ -53,7 +55,7 @@ export default function Features() {
         <Stat label="Total features" value={num(items.length)} tone="brand" icon={<ListChecks size={16} />} />
         <Stat label="Matching search" value={num(filtered.length)} tone="ok" />
         <Stat label="Sections" value={num(new Set(items.map((i) => i.section)).size)} tone="warn" />
-        <Stat label="App version" value="v12.0" tone="ok" />
+        <Stat label="App version" value={BUILD.version} tone="ok" sub={BUILD.commit} />
       </div>
 
       <Card>
