@@ -1,4 +1,4 @@
-# ⚡ SwiftPOS Pro v7
+# ⚡ SwiftPOS Pro v7.1
 
 **An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
 
@@ -20,8 +20,13 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 | 🚚 **Purchasing** | Vendors, purchase orders, one-tap receive with auto stock-in |
 | 📊 **Analytics** | Dashboard KPIs, hourly heatmap, GST (GSTR-1 style), P&L, staff performance |
 | 🌑 **AMOLED UI** | True-black theme, 6 accents, 3 densities, light mode, fully responsive phone → desktop |
+| 🧾 **20 bill templates** | Thermal 58/80mm, A4 GST invoice, KOT, token slip, gift receipt, challan, Z-report… plus **upload your own HTML template** |
+| 📲 **Multi-UPI + QR** | Save unlimited UPI IDs, dynamic scan-to-pay QR at checkout and printed on bills, GPay/PhonePe/Paytm deep links |
+| ⚙️ **16 settings tabs** | Store, billing, charges, payments, templates, printing, POS, inventory, loyalty, messaging, security, JSON, appearance, backup |
+| 🏷️ **Label printing** | Code128 barcode + price shelf tags, 3 sizes, 1–6 columns |
+| 🔒 **App lock** | PIN keypad with idle auto-lock, cashier discount caps, hide-cost mode |
 
-Full list: [FEATURES.md](./FEATURES.md) — **135 features**.
+Full list: [FEATURES.md](./FEATURES.md) — **212 features**.
 
 ---
 

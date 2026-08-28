@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Banknote, Smartphone, CreditCard, Wallet, HandCoins, Split } from 'lucide-react';
 import { Modal, Field, Input } from '@/components/ui';
+import UpiPay from './UpiPay';
 import { money, cx } from '@/lib/format';
 import { useSettings } from '@/store/settings';
 import type { PayMode, SplitPart } from '@/db/types';
@@ -49,7 +50,7 @@ export default function PaymentModal({ open, onClose, total, onConfirm, hasCusto
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        {MODES.map((m) => {
+        {MODES.filter((m) => s.enabledPayModes.includes(m.id)).map((m) => {
           const Icon = m.icon;
           const disabled = m.id === 'credit' && !hasCustomer;
           return (
@@ -94,6 +95,10 @@ export default function PaymentModal({ open, onClose, total, onConfirm, hasCusto
             <span className={cx('font-mono', Math.abs(splitSum - total) < 0.5 ? 'text-ok' : 'text-warn')}>{money(splitSum, s.currency)} / {money(total, s.currency)}</span>
           </div>
         </div>
+      )}
+
+      {(mode === 'upi' || (mode === 'split' && splits.some((x) => x.mode === 'upi'))) && s.showUpiQrOnPayment && (
+        <div className="mt-4"><UpiPay amount={mode === 'upi' ? total : splits.filter((x) => x.mode === 'upi').reduce((t, x) => t + (+x.amount || 0), 0)} note="Bill payment" /></div>
       )}
 
       {mode === 'credit' && <p className="mt-4 rounded-xl border border-warn/30 bg-warn/10 p-3 text-xs text-warn">This amount will be added to the customer's outstanding credit balance.</p>}

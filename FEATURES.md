@@ -152,3 +152,92 @@
 133. 100% offline — IndexedDB (Dexie) storage, no server required
 134. Persisted cart, settings and session across reloads
 135. Seeded demo store (44 products, 24 customers, 60 days of sales)
+
+---
+
+# v7.1 — "Next level" additions (features 136 → 212)
+
+## Bill templates (20 built-in + unlimited custom)
+136. **Classic Thermal (80mm)** — the everyday receipt
+137. **Compact 58mm** — paper-saving mini roll
+138. **Detailed Tax Thermal** — per-item HSN, GST%, taxable value
+139. **Minimal Mono** — clean sans-serif, no borders
+140. **Bold Header** — inverted black shop banner
+141. **Restaurant Bill** — table, channel, service charge, tip line
+142. **Pharmacy Rx Bill** — drug licence, patient, pharmacist signature
+143. **Token / Queue Slip** — giant order number for pickup counters
+144. **Gift Receipt** — items without prices
+145. **Duplicate Copy** — CUSTOMER / MERCHANT watermark strip
+146. **UPI Pay-First** — huge scan-to-pay QR at the top
+147. **Loyalty Focus** — points earned + savings panel
+148. **A4 GST Tax Invoice** — formal party block, HSN table, signature
+149. **A4 Modern Accent** — colour-blocked layout with summary cards
+150. **A4 Minimal** — typography-first, elegant
+151. **A4 Quotation / Estimate** — validity note, non-tax
+152. **A4 Delivery Challan** — dispatch note with signature lines
+153. **Kitchen KOT** — big item names, notes, no prices
+154. **Shelf / Price Label strip** — price tags straight from a bill
+155. **Day Close (Z-Report)** — end-of-day reconciliation layout
+156. Template gallery with live thumbnail previews of every design
+157. Full-screen preview with sample bill data
+158. One-click "Test print" for any template
+159. Set separate defaults for receipt / A4 invoice / KOT
+160. Duplicate any built-in template as a starting point
+161. Download any template as .html
+162. **Upload your own .html template** from your computer
+163. Built-in template editor with live preview pane
+164. Mustache-style token engine: `{{token}}`, `{{#items}}…{{/items}}`, `{{^empty}}…{{/}}`
+165. 40+ documented tokens with click-to-copy chips
+166. Custom templates stored offline in IndexedDB, included in backups
+167. Print copies (1–4) with page breaks
+168. Duplicate/merchant copy printing with configurable label
+169. Print margin and font-scale controls per install
+170. Invoice barcode (Code128) printed on receipts
+171. Amount-in-words (Indian crore/lakh format) on invoices
+
+## UPI & payments
+172. **Unlimited UPI IDs** — add, label, edit, disable, delete
+173. Default UPI selector (starred) used across the app
+174. Live QR preview for every saved UPI ID
+175. Download any UPI QR as a PNG (for counter display)
+176. NPCI-compliant `upi://pay` deep links with amount + txn reference
+177. One-tap app buttons: GPay, PhonePe, Paytm, any UPI app
+178. Copy VPA to clipboard
+179. Dynamic QR on the payment screen for the exact bill amount
+180. UPI QR block auto-rendered inside receipt templates
+181. Payee name and merchant code (MCC) per UPI account
+182. QR size control for printed bills
+183. Split payments can include a UPI leg with its own QR
+184. Enable/disable individual payment modes
+185. Default payment mode preference
+186. Bank account block (bank, holder, A/C no., IFSC) for invoices
+187. VPA validation before saving
+
+## New settings surfaces (16 tabs)
+188. **Store** — 2 phones, website, tagline, address
+189. Legal IDs: GSTIN, PAN, FSSAI, drug licence
+190. Logo upload + signature upload (stored as data URLs)
+191. Currency symbol, symbol position, decimal places
+192. Date format and language (English / Hindi beta)
+193. **Billing** — prefix, next number, digit padding, suffix, live preview
+194. Yearly invoice-number reset
+195. Rounding mode: nearest / always up / always down
+196. Cess support, HSN visibility, savings line, amount-in-words toggles
+197. Terms & conditions text, footer, duplicate label
+198. **Charges tab** — service charge %, packaging, delivery, tip, taxable toggle
+199. Live "₹1,000 bill" charge preview
+200. **Printing tab** — paper size, copies, margin, font scale, density
+201. Auto-print receipt, auto-print KOT, logo, barcode, QR, drawer kick
+202. **POS tab** — one-tap add, auto-focus search, confirm clear cart, keep customer after sale
+203. **Inventory tab** — expiry window, reorder multiplier, barcode prefix, label options
+204. **Loyalty tab** — points expiry, birthday bonus
+205. **Messaging tab** — WhatsApp bill / reminder / marketing templates with placeholders
+206. Alert toggles: low stock, expiry, dues, daily summary
+207. **Security tab** — app-lock PIN, auto-lock timer, cashier discount cap, hide cost prices, manager-only refunds
+208. **About tab** — profile, storage, stack, licence at a glance
+
+## New operational features
+209. **App lock screen** with PIN keypad, haptics and idle auto-lock
+210. **Barcode & price label printing** page — Code128 generator, 3 label sizes, 1–6 columns, quantity per item, live sheet preview
+211. Per-bill extra charges (service %, packaging, delivery, tip) with quick presets
+212. Charges flow into totals, receipts, profit maths and reports

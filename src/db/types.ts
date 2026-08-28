@@ -61,6 +61,10 @@ export interface Sale {
   taxable: number;
   gstAmount: number;
   roundOff: number;
+  serviceCharge?: number;
+  deliveryCharge?: number;
+  packagingCharge?: number;
+  tip?: number;
   total: number;
   profit: number;
   payMode: PayMode;
@@ -146,3 +150,14 @@ export interface Shift {
 export interface Table { id: ID; name: string; area: string; seats: number; status: 'free' | 'occupied' | 'billed'; holdId?: ID }
 
 export interface Reservation { id: ID; name: string; phone: string; ts: number; people: number; note?: string; status: 'booked' | 'seated' | 'cancelled' }
+
+export interface CustomTemplate {
+  id: ID; name: string; paper: '58mm' | '80mm' | 'A4'; html: string;
+  desc?: string; createdAt: number; updatedAt: number;
+}
+
+export interface Quote {
+  id: ID; quoteNo: string; ts: number; customerId?: ID; customerName?: string;
+  lines: CartLine[]; total: number; validTill?: string; note?: string;
+  status: 'open' | 'converted' | 'expired';
+}

@@ -50,6 +50,7 @@ export default function POS() {
   const [holdOpen, setHoldOpen] = useState(false);
   const [discOpen, setDiscOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [chargeOpen, setChargeOpen] = useState(false);
   const [lineEdit, setLineEdit] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Sale | null>(null);
   const [limit, setLimit] = useState(60);
@@ -83,8 +84,12 @@ export default function POS() {
 
   const totals = computeTotals(cart.lines, {
     billDiscount: cart.billDiscount, billDiscountType: cart.billDiscountType,
-    coupon: cart.coupon, taxInclusive: s.taxInclusive, roundOff: s.roundOff,
+    coupon: cart.coupon, taxInclusive: s.taxInclusive, roundOff: s.roundOff, roundMode: s.roundMode,
     pointsRedeemed: cart.pointsRedeemed, pointValue: s.pointValue,
+    serviceChargePct: cart.serviceChargePct || (s.serviceChargeEnabled ? s.serviceChargePct : 0),
+    deliveryCharge: cart.deliveryCharge || (cart.channel === 'delivery' ? s.deliveryCharge : 0),
+    packagingCharge: cart.packagingCharge || (cart.channel !== 'counter' ? s.packagingCharge : 0),
+    tip: cart.tip,
   });
 
   const customer = customers.find((c: any) => c.id === cart.customerId);
@@ -181,15 +186,20 @@ export default function POS() {
       <div className="safe-b border-t border-line bg-surface2/40 p-3">
         <div className="mb-2 flex flex-wrap gap-1.5">
           <button className="chip" onClick={() => setDiscOpen(true)}><Percent size={11} className="mr-1 inline" />Discount</button>
+          <button className="chip" onClick={() => setChargeOpen(true)}><Plus size={11} className="mr-1 inline" />Charges</button>
           <button className="chip" onClick={() => setNoteOpen(true)}><StickyNote size={11} className="mr-1 inline" />Note</button>
           <button className="chip" onClick={doHold}><Pause size={11} className="mr-1 inline" />Hold</button>
-          <button className="chip" onClick={() => { cart.clear(); toast('Cart cleared'); }}><Trash2 size={11} className="mr-1 inline" />Clear</button>
+          <button className="chip" onClick={() => { if (!s.confirmClearCart || cart.lines.length === 0 || confirm('Clear the current cart?')) { cart.clear(); toast('Cart cleared'); } }}><Trash2 size={11} className="mr-1 inline" />Clear</button>
         </div>
         <div className="space-y-1 text-xs">
           <Row label="Subtotal" value={money(totals.subTotal, s.currency)} />
           {totals.itemDiscount > 0 && <Row label="Item discount" value={'−' + money(totals.itemDiscount, s.currency)} tone="ok" />}
           {totals.billDiscount > 0 && <Row label="Bill discount" value={'−' + money(totals.billDiscount, s.currency)} tone="ok" />}
           {totals.couponValue > 0 && <Row label={cart.coupon ? `Coupon ${cart.coupon.code}` : 'Points redeemed'} value={'−' + money(totals.couponValue, s.currency)} tone="ok" />}
+          {totals.serviceCharge > 0 && <Row label="Service charge" value={money(totals.serviceCharge, s.currency)} />}
+          {totals.packagingCharge > 0 && <Row label="Packaging" value={money(totals.packagingCharge, s.currency)} />}
+          {totals.deliveryCharge > 0 && <Row label="Delivery" value={money(totals.deliveryCharge, s.currency)} />}
+          {totals.tip > 0 && <Row label="Tip" value={money(totals.tip, s.currency)} />}
           <Row label={`GST (${s.taxInclusive ? 'incl.' : 'extra'})`} value={money(totals.gstAmount, s.currency)} />
           {!!totals.roundOff && <Row label="Round off" value={money(totals.roundOff, s.currency)} />}
         </div>
@@ -271,6 +281,21 @@ export default function POS() {
         footer={<button className="btn-primary w-full" onClick={() => setNoteOpen(false)}>Save note</button>}>
         <Textarea value={cart.note} onChange={(e) => cart.setNote(e.target.value)} placeholder="Delivery address, instructions, reference…" autoFocus />
       </Modal>
+      <Modal open={chargeOpen} onClose={() => setChargeOpen(false)} title="Extra charges"
+        footer={<button className="btn-primary w-full" onClick={() => setChargeOpen(false)}>Apply</button>}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Service charge %"><Input inputMode="decimal" value={cart.serviceChargePct || ''} onChange={(e) => cart.setCharges({ serviceChargePct: +e.target.value || 0 })} placeholder={String(s.serviceChargePct)} /></Field>
+          <Field label="Packaging charge"><Input inputMode="decimal" value={cart.packagingCharge || ''} onChange={(e) => cart.setCharges({ packagingCharge: +e.target.value || 0 })} placeholder={String(s.packagingCharge)} /></Field>
+          <Field label="Delivery charge"><Input inputMode="decimal" value={cart.deliveryCharge || ''} onChange={(e) => cart.setCharges({ deliveryCharge: +e.target.value || 0 })} placeholder={String(s.deliveryCharge)} /></Field>
+          <Field label="Tip"><Input inputMode="decimal" value={cart.tip || ''} onChange={(e) => cart.setCharges({ tip: +e.target.value || 0 })} /></Field>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {[5, 10].map((p) => <button key={p} className="chip" onClick={() => cart.setCharges({ serviceChargePct: p })}>{p}% service</button>)}
+          {[10, 20, 50].map((p) => <button key={p} className="chip" onClick={() => cart.setCharges({ tip: p })}>Tip {money(p, s.currency)}</button>)}
+          <button className="chip border-bad/40 text-bad" onClick={() => cart.setCharges({ serviceChargePct: 0, deliveryCharge: 0, packagingCharge: 0, tip: 0 })}>Clear charges</button>
+        </div>
+      </Modal>
+
       <Modal open={holdOpen} onClose={() => setHoldOpen(false)} title={`Held ${terms.sales.toLowerCase()} (${holds.length})`}>
         {holds.length === 0 ? <Empty title="Nothing on hold" sub="Press F9 to park the current cart." /> : (
           <div className="space-y-2">

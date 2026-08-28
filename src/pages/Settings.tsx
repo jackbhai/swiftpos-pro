@@ -1,36 +1,37 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Store, Receipt, Palette, Database, Shield, Gift, Sparkles, Download, Upload, Trash2,
-  FileJson, Copy, Check, Cloud, RefreshCw, Loader2, ChevronRight,
+  Image as ImageIcon, Trash2, Info, ShieldCheck, MessageSquare, Printer, Bell, Percent,
 } from 'lucide-react';
-import { Card, Field, Input, Select, Textarea, Toggle, Tabs, Badge, ConfirmBtn, Modal, SectionTitle, Empty } from '@/components/ui';
+import { Card, Field, Input, Select, Textarea, Toggle, Tabs, SectionTitle, Badge, ConfirmBtn } from '@/components/ui';
 import { useSettings, useShop } from '@/store/settings';
-import { SHOP_PROFILES } from '@/lib/shopProfiles';
-import { exportBackup, wipeAll } from '@/lib/backup';
-import { seedIfEmpty } from '@/db/seed';
-import { db } from '@/db/db';
 import { toast } from '@/store/ui';
-import { download, downloadCSV } from '@/lib/csv';
-import { money, num, dt, cx } from '@/lib/format';
-import {
-  importText, importFromURL, defaultImportOptions, SAMPLE_FORMATS, detectKind, unwrap,
-  type ImportOptions,
-} from '@/lib/importer';
+import { cx, money } from '@/lib/format';
+import { ShopTypeTab, JsonTab, BackupTab } from './settings/DataTabs';
+import PaymentsTab from './settings/PaymentsTab';
+import TemplatesTab from './settings/TemplatesTab';
 
 const TABS = [
   { id: 'shop', label: 'Shop Type' },
   { id: 'store', label: 'Store' },
   { id: 'billing', label: 'Billing & Tax' },
+  { id: 'charges', label: 'Charges' },
+  { id: 'payments', label: 'Payments & UPI' },
+  { id: 'templates', label: 'Bill Templates' },
+  { id: 'printing', label: 'Printing' },
   { id: 'pos', label: 'POS' },
+  { id: 'inventory', label: 'Inventory' },
+  { id: 'loyalty', label: 'Loyalty' },
+  { id: 'messaging', label: 'Messaging' },
+  { id: 'security', label: 'Security' },
   { id: 'json', label: 'JSON Data' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'backup', label: 'Backup' },
+  { id: 'about', label: 'About' },
 ];
 
 export default function SettingsPage() {
   const s = useSettings();
-  const { profile, modules } = useShop();
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = useState(params.get('tab') ?? 'shop');
   useEffect(() => { setParams(tab === 'shop' ? {} : { tab }); }, [tab]);
@@ -40,428 +41,323 @@ export default function SettingsPage() {
       <Card pad={false} className="p-3"><Tabs active={tab} onChange={setTab} tabs={TABS} /></Card>
 
       {tab === 'shop' && <ShopTypeTab />}
-
-      {tab === 'store' && (
-        <Card className="grid gap-3 sm:grid-cols-2">
-          <Field label="Shop name" className="sm:col-span-2"><Input value={s.shopName} onChange={(e) => s.set({ shopName: e.target.value })} /></Field>
-          <Field label="Tagline"><Input value={s.tagline} onChange={(e) => s.set({ tagline: e.target.value })} /></Field>
-          <Field label="Logo emoji"><Input value={s.logoEmoji} onChange={(e) => s.set({ logoEmoji: e.target.value })} /></Field>
-          <Field label="Phone"><Input value={s.phone} onChange={(e) => s.set({ phone: e.target.value })} /></Field>
-          <Field label="Email"><Input value={s.email} onChange={(e) => s.set({ email: e.target.value })} /></Field>
-          <Field label="GSTIN"><Input value={s.gstin} onChange={(e) => s.set({ gstin: e.target.value })} /></Field>
-          <Field label="Currency symbol"><Input value={s.currency} onChange={(e) => s.set({ currency: e.target.value })} /></Field>
-          <Field label="Address" className="sm:col-span-2"><Textarea value={s.address} onChange={(e) => s.set({ address: e.target.value })} /></Field>
-          <Field label="Receipt footer" className="sm:col-span-2"><Input value={s.footerNote} onChange={(e) => s.set({ footerNote: e.target.value })} /></Field>
-        </Card>
-      )}
-
-      {tab === 'billing' && (
-        <Card className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Invoice prefix"><Input value={s.invoicePrefix} onChange={(e) => s.set({ invoicePrefix: e.target.value })} /></Field>
-            <Field label="Next invoice no."><Input inputMode="numeric" value={s.invoiceNext} onChange={(e) => s.set({ invoiceNext: +e.target.value || 1 })} /></Field>
-            <Field label="Default GST %"><Input inputMode="decimal" value={s.defaultGst} onChange={(e) => s.set({ defaultGst: +e.target.value || 0 })} /></Field>
-          </div>
-          <Toggle checked={s.taxInclusive} onChange={(v) => s.set({ taxInclusive: v })} label="Prices include GST" hint="Turn off to add tax on top of the listed price" />
-          <Toggle checked={s.roundOff} onChange={(v) => s.set({ roundOff: v })} label="Round off bill total" hint="Round to the nearest rupee" />
-          <Toggle checked={s.autoPrint} onChange={(v) => s.set({ autoPrint: v })} label="Auto-print receipt" hint="Open print dialog right after payment" />
-          <Toggle checked={s.customerRequired} onChange={(v) => s.set({ customerRequired: v })} label="Require customer on every bill" />
-          <Toggle checked={s.negativeStock} onChange={(v) => s.set({ negativeStock: v })} label="Allow selling out-of-stock items" />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Points per ₹100"><Input inputMode="decimal" value={s.pointsPer100} onChange={(e) => s.set({ pointsPer100: +e.target.value || 0 })} /></Field>
-            <Field label="Point value"><Input inputMode="decimal" value={s.pointValue} onChange={(e) => s.set({ pointValue: +e.target.value || 0 })} /></Field>
-            <Field label="Min redemption"><Input inputMode="numeric" value={s.minRedeem} onChange={(e) => s.set({ minRedeem: +e.target.value || 0 })} /></Field>
-          </div>
-        </Card>
-      )}
-
-      {tab === 'pos' && (
-        <Card className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Default layout"><Select value={s.posLayout} onChange={(e) => s.set({ posLayout: e.target.value as any })}><option value="grid">Grid</option><option value="list">List</option></Select></Field>
-            <Field label="Grid columns (mobile)"><Input inputMode="numeric" value={s.gridCols} onChange={(e) => s.set({ gridCols: Math.min(5, Math.max(2, +e.target.value || 3)) })} /></Field>
-            <Field label="Expiry alert (days)"><Input inputMode="numeric" value={s.expiryAlertDays} onChange={(e) => s.set({ expiryAlertDays: +e.target.value || 30 })} /></Field>
-          </div>
-          <Field label="Quick cash buttons (comma separated)">
-            <Input value={s.quickCash.join(', ')} onChange={(e) => s.set({ quickCash: e.target.value.split(',').map((x) => +x.trim()).filter(Boolean) })} />
-          </Field>
-          <Toggle checked={s.showImages} onChange={(v) => s.set({ showImages: v })} label="Show product icons" />
-          <Toggle checked={s.soundEnabled} onChange={(v) => s.set({ soundEnabled: v })} label="Sound feedback" hint="Beeps on scan, add and payment" />
-          <Toggle checked={s.hapticEnabled} onChange={(v) => s.set({ hapticEnabled: v })} label="Haptic vibration (mobile)" />
-          <Toggle checked={s.lowStockAlert} onChange={(v) => s.set({ lowStockAlert: v })} label="Low stock alerts" />
-          <Toggle checked={s.requirePin} onChange={(v) => s.set({ requirePin: v })} label="Require staff PIN for refunds & price overrides" />
-        </Card>
-      )}
-
+      {tab === 'store' && <StoreTab />}
+      {tab === 'billing' && <BillingTab />}
+      {tab === 'charges' && <ChargesTab />}
+      {tab === 'payments' && <PaymentsTab />}
+      {tab === 'templates' && <TemplatesTab />}
+      {tab === 'printing' && <PrintingTab />}
+      {tab === 'pos' && <PosTab />}
+      {tab === 'inventory' && <InventoryTab />}
+      {tab === 'loyalty' && <LoyaltyTab />}
+      {tab === 'messaging' && <MessagingTab />}
+      {tab === 'security' && <SecurityTab />}
       {tab === 'json' && <JsonTab />}
-
-      {tab === 'appearance' && (
-        <Card className="space-y-4">
-          <div>
-            <p className="label">Theme</p>
-            <div className="flex gap-2">
-              {(['amoled', 'light'] as const).map((t) => (
-                <button key={t} onClick={() => s.set({ theme: t })} className={cx('chip capitalize', s.theme === t && 'chip-on')}>{t === 'amoled' ? 'AMOLED black' : 'Light'}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="label">Accent colour</p>
-            <div className="flex flex-wrap gap-2">
-              {(['cyan', 'mint', 'violet', 'amber', 'rose', 'lime'] as const).map((a) => (
-                <button key={a} onClick={() => s.set({ accent: a })} className={cx('chip capitalize', s.accent === a && 'chip-on')}>{a}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="label">Density</p>
-            <div className="flex gap-2">
-              {(['compact', 'normal', 'cozy'] as const).map((d) => (
-                <button key={d} onClick={() => s.set({ density: d })} className={cx('chip capitalize', s.density === d && 'chip-on')}>{d}</button>
-              ))}
-            </div>
-          </div>
-        </Card>
-      )}
-
+      {tab === 'appearance' && <AppearanceTab />}
       {tab === 'backup' && <BackupTab />}
+      {tab === 'about' && <AboutTab />}
     </div>
   );
 }
 
-/* ─────────────────────────── SHOP TYPE ─────────────────────────── */
-
-function ShopTypeTab() {
+/* ── STORE ─────────────────────────────────────────────── */
+function StoreTab() {
   const s = useSettings();
-  const { profile, modules } = useShop();
-  const [confirm, setConfirm] = useState<string | null>(null);
-
+  const logoRef = useRef<HTMLInputElement>(null);
+  const signRef = useRef<HTMLInputElement>(null);
+  const readImg = (f: File, key: 'logoDataUrl' | 'signatureDataUrl') => {
+    if (f.size > 400_000) return toast('Please use an image under 400 KB', 'err');
+    const r = new FileReader();
+    r.onload = () => { s.set({ [key]: String(r.result) } as any); toast('Image saved'); };
+    r.readAsDataURL(f);
+  };
   return (
     <div className="space-y-3">
-      <Card>
-        <SectionTitle title="What kind of business is this?" sub="Pick a profile — wording, modules, tax defaults and layout adapt instantly." />
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {SHOP_PROFILES.map((p) => (
-            <button key={p.id} onClick={() => setConfirm(p.id)}
-              className={cx('rounded-2xl border p-3 text-left transition', s.shopType === p.id ? 'border-brand bg-brand/10 shadow-glow' : 'border-line hover:border-brand/50')}>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{p.emoji}</span>
-                <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{p.label}</span>
-                {s.shopType === p.id && <Badge tone="brand">active</Badge>}
-              </div>
-              <p className="mt-1 text-[11px] leading-snug text-ink3">{p.blurb}</p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {Object.entries(p.modules).filter(([, v]) => v).slice(0, 4).map(([k]) => (
-                  <span key={k} className="rounded-md border border-line px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-ink3">{k}</span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
+      <Card className="grid gap-3 sm:grid-cols-2">
+        <Field label="Shop name" className="sm:col-span-2"><Input value={s.shopName} onChange={(e) => s.set({ shopName: e.target.value })} /></Field>
+        <Field label="Tagline"><Input value={s.tagline} onChange={(e) => s.set({ tagline: e.target.value })} /></Field>
+        <Field label="Logo emoji"><Input value={s.logoEmoji} onChange={(e) => s.set({ logoEmoji: e.target.value })} /></Field>
+        <Field label="Phone"><Input value={s.phone} onChange={(e) => s.set({ phone: e.target.value })} /></Field>
+        <Field label="Alternate phone"><Input value={s.phone2} onChange={(e) => s.set({ phone2: e.target.value })} /></Field>
+        <Field label="Email"><Input value={s.email} onChange={(e) => s.set({ email: e.target.value })} /></Field>
+        <Field label="Website"><Input value={s.website} onChange={(e) => s.set({ website: e.target.value })} /></Field>
+        <Field label="Address" className="sm:col-span-2"><Textarea value={s.address} onChange={(e) => s.set({ address: e.target.value })} /></Field>
       </Card>
-
-      <Card>
-        <SectionTitle title={`Modules · ${profile.emoji} ${profile.label}`} sub="Override anything the profile turned on or off." />
-        <div className="grid gap-2 sm:grid-cols-2">
-          {Object.keys(profile.modules).map((k) => {
-            const key = k as keyof typeof profile.modules;
-            return (
-              <Toggle key={k} checked={!!modules[key]} label={MODULE_LABELS[k] ?? k} hint={MODULE_HINTS[k]}
-                onChange={(v) => s.set({ moduleOverrides: { ...s.moduleOverrides, [key]: v } })} />
-            );
-          })}
-        </div>
-        <button className="btn-ghost mt-3" onClick={() => { s.set({ moduleOverrides: {} }); toast('Modules reset to profile defaults'); }}>
-          <RefreshCw size={14} /> Reset to profile defaults
-        </button>
+      <Card className="grid gap-3 sm:grid-cols-2">
+        <SectionTitle title="Legal identifiers" sub="Printed on invoices where the template supports them" />
+        <div />
+        <Field label="GSTIN"><Input value={s.gstin} onChange={(e) => s.set({ gstin: e.target.value })} /></Field>
+        <Field label="PAN"><Input value={s.panNo} onChange={(e) => s.set({ panNo: e.target.value })} /></Field>
+        <Field label="FSSAI licence"><Input value={s.fssai} onChange={(e) => s.set({ fssai: e.target.value })} /></Field>
+        <Field label="Drug licence (pharmacy)"><Input value={s.drugLicense} onChange={(e) => s.set({ drugLicense: e.target.value })} /></Field>
       </Card>
-
       <Card>
-        <SectionTitle title="Vocabulary preview" sub="How this profile renames things across the app" />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {Object.entries(profile.terms).map(([k, v]) => (
-            <div key={k} className="rounded-lg border border-line bg-surface2/50 px-2.5 py-1.5">
-              <p className="text-[10px] uppercase tracking-wider text-ink3">{k}</p>
-              <p className="truncate text-sm font-bold text-ink">{v}</p>
+        <SectionTitle title="Logo & signature" sub="Used by A4 templates. Keep files small (< 400 KB)." />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {([['logoDataUrl', 'Logo', logoRef], ['signatureDataUrl', 'Signature', signRef]] as const).map(([key, label, ref]) => (
+            <div key={key} className="rounded-xl border border-line p-3">
+              <p className="label">{label}</p>
+              {s[key] ? <img src={s[key] as string} alt={label} className="mb-2 max-h-20 rounded bg-white p-1" />
+                      : <div className="mb-2 grid h-20 place-items-center rounded bg-surface2 text-ink3"><ImageIcon size={20} /></div>}
+              <input ref={ref} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && readImg(e.target.files[0], key)} />
+              <div className="flex gap-2">
+                <button className="btn-soft flex-1 text-xs" onClick={() => ref.current?.click()}>Upload</button>
+                <button className="btn-ghost text-xs" onClick={() => s.set({ [key]: '' } as any)}><Trash2 size={13} /></button>
+              </div>
             </div>
           ))}
         </div>
       </Card>
-
-      <Modal open={!!confirm} onClose={() => setConfirm(null)} title="Switch shop type?"
-        footer={<div className="flex gap-2">
-          <button className="btn-ghost flex-1" onClick={() => { s.applyShopType(confirm as any, false); setConfirm(null); toast('Shop type changed (settings kept)'); }}>Keep my settings</button>
-          <button className="btn-primary flex-1" onClick={() => { s.applyShopType(confirm as any, true); setConfirm(null); toast('Profile applied'); }}>Apply profile defaults</button>
-        </div>}>
-        <p className="text-sm text-ink2">
-          Applying defaults updates GST rate, quick-cash buttons, POS layout, accent colour and module switches for
-          <b className="text-ink"> {SHOP_PROFILES.find((p) => p.id === confirm)?.label}</b>. Your products, customers and sales are never touched.
-        </p>
-      </Modal>
+      <Card className="grid gap-3 sm:grid-cols-3">
+        <Field label="Currency symbol"><Input value={s.currency} onChange={(e) => s.set({ currency: e.target.value })} /></Field>
+        <Field label="Symbol position"><Select value={s.currencyPosition} onChange={(e) => s.set({ currencyPosition: e.target.value as any })}><option value="before">Before — ₹100</option><option value="after">After — 100₹</option></Select></Field>
+        <Field label="Decimal places"><Select value={s.decimals} onChange={(e) => s.set({ decimals: +e.target.value as any })}>{[0, 1, 2].map((n) => <option key={n} value={n}>{n}</option>)}</Select></Field>
+        <Field label="Date format"><Select value={s.dateFormat} onChange={(e) => s.set({ dateFormat: e.target.value as any })}>{['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd MMM yyyy'].map((f) => <option key={f} value={f}>{f}</option>)}</Select></Field>
+        <Field label="Language"><Select value={s.language} onChange={(e) => s.set({ language: e.target.value as any })}><option value="en">English</option><option value="hi">हिन्दी (beta)</option></Select></Field>
+      </Card>
     </div>
   );
 }
 
-const MODULE_LABELS: Record<string, string> = {
-  tables: 'Table service / floor plan', batchExpiry: 'Batch & expiry tracking',
-  prescription: 'Prescription (Rx) capture', serialNumbers: 'Serial / IMEI capture',
-  variants: 'Size & variant options', kitchenNote: 'Kitchen / item notes',
-  appointments: 'Appointments & bookings', weighScale: 'Loose / weighed items',
-  warranty: 'Warranty tracking', loyalty: 'Loyalty points',
-};
-const MODULE_HINTS: Record<string, string> = {
-  tables: 'Adds the Tables page and dine-in order flow',
-  batchExpiry: 'Batch no. + expiry fields, expiry alerts and reports',
-  prescription: 'Doctor / Rx note field on the bill',
-  serialNumbers: 'Capture serial numbers per unit sold',
-  variants: 'Multiple prices per item (S/M/L, half/full)',
-  kitchenNote: 'Free-text note per cart line for the kitchen',
-  appointments: 'Booking slots for services',
-  weighScale: 'Decimal quantities in kg / g / litre',
-  warranty: 'Warranty months printed on the invoice',
-  loyalty: 'Earn and redeem points on bills',
-};
-
-/* ─────────────────────────── JSON DATA ─────────────────────────── */
-
-const BUNDLED = [
-  { id: 'lite', label: 'Demo catalogue — Lite', desc: '1,500 mixed retail products. Fast, great for testing.', url: 'data/catalog-lite.json' },
-  { id: 'pharmacy', label: 'Demo catalogue — Wellness / Pharmacy', desc: '~800 ayurveda, supplements & hygiene SKUs.', url: 'data/catalog-pharmacy.json' },
-  { id: 'full', label: 'Demo catalogue — Full', desc: '27,555 real products with barcodes, brands & stock (7 MB).', url: 'data/catalog-full.json' },
-];
-
-function JsonTab() {
+/* ── BILLING ───────────────────────────────────────────── */
+function BillingTab() {
   const s = useSettings();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState('');
-  const [opts, setOpts] = useState<ImportOptions>(defaultImportOptions());
-  const [busy, setBusy] = useState('');
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [result, setResult] = useState<string>('');
-  const [preview, setPreview] = useState<{ kind: string; rows: number; sample: any } | null>(null);
-  const [copied, setCopied] = useState('');
-  const [counts, setCounts] = useState({ products: 0, customers: 0, sales: 0, vendors: 0 });
-
-  const refreshCounts = async () => setCounts({
-    products: await db.products.count(), customers: await db.customers.count(),
-    sales: await db.sales.count(), vendors: await db.vendors.count(),
-  });
-  useEffect(() => { refreshCounts(); }, [busy]);
-
-  const withProgress = (): ImportOptions => ({ ...opts, onProgress: (done, total) => setProgress({ done, total }) });
-
-  const analyse = (raw: string) => {
-    try {
-      const data = JSON.parse(raw);
-      const rows = unwrap(data);
-      setPreview({ kind: detectKind(data), rows: rows.length || (data.app ? -1 : 0), sample: rows[0] ?? data });
-    } catch { setPreview(null); }
-  };
-
-  const runImport = async (fn: () => Promise<any>, label: string) => {
-    setBusy(label); setResult(''); setProgress(null);
-    try {
-      const r = await fn();
-      setResult(r.message);
-      toast(r.message);
-    } catch (e: any) {
-      setResult('Error: ' + (e?.message ?? e));
-      toast('Import failed: ' + (e?.message ?? e), 'err');
-    } finally { setBusy(''); setProgress(null); refreshCounts(); }
-  };
-
-  const onFile = async (file: File) => {
-    const raw = await file.text();
-    if (raw.length < 4_000_000) { setText(raw); analyse(raw); }
-    else { setText(''); setPreview(null); toast('Large file — importing directly without preview', 'info'); }
-    runImport(() => importText(raw, withProgress()), 'file');
-  };
-
   return (
     <div className="space-y-3">
-      <Card>
-        <SectionTitle title="Import data" sub="JSON or CSV — products, customers, vendors or a full SwiftPOS backup. Fields are auto-detected." />
-        <div className="grid gap-2 sm:grid-cols-4">
-          {[['Products', counts.products], ['Customers', counts.customers], [
-            'Sales', counts.sales], ['Vendors', counts.vendors]].map(([l, v]) => (
-            <div key={l as string} className="rounded-xl border border-line bg-surface2/50 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-ink3">{l}</p>
-              <p className="text-lg font-extrabold text-ink">{num(v as number)}</p>
-            </div>
-          ))}
+      <Card className="space-y-3">
+        <SectionTitle title="Invoice numbering" />
+        <div className="grid gap-3 sm:grid-cols-4">
+          <Field label="Prefix"><Input value={s.invoicePrefix} onChange={(e) => s.set({ invoicePrefix: e.target.value })} /></Field>
+          <Field label="Next number"><Input inputMode="numeric" value={s.invoiceNext} onChange={(e) => s.set({ invoiceNext: +e.target.value || 1 })} /></Field>
+          <Field label="Digits"><Input inputMode="numeric" value={s.invoicePadding} onChange={(e) => s.set({ invoicePadding: +e.target.value || 5 })} /></Field>
+          <Field label="Suffix"><Input value={s.invoiceSuffix} onChange={(e) => s.set({ invoiceSuffix: e.target.value })} /></Field>
         </div>
-
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Field label="Import mode" hint="Merge upserts by barcode/name. Replace clears the table first.">
-            <Select value={opts.mode} onChange={(e) => setOpts({ ...opts, mode: e.target.value as any })}>
-              <option value="merge">Merge / update existing</option>
-              <option value="replace">Replace everything</option>
-            </Select>
-          </Field>
-          <Field label="Category source" hint="Your file has both category and unit_type — pick which becomes the app category.">
-            <Select value={opts.categoryFrom} onChange={(e) => setOpts({ ...opts, categoryFrom: e.target.value as any })}>
-              <option value="category">category field</option>
-              <option value="unit_type">unit_type / sub-category field</option>
-            </Select>
-          </Field>
-          <Field label="Assumed margin % (when cost is missing)">
-            <Input inputMode="decimal" value={opts.defaultMarginPct} onChange={(e) => setOpts({ ...opts, defaultMarginPct: +e.target.value || 0 })} />
-          </Field>
-          <Field label="Default GST % / low-stock level">
-            <div className="flex gap-2">
-              <Input inputMode="decimal" value={opts.defaultGst} onChange={(e) => setOpts({ ...opts, defaultGst: +e.target.value || 0 })} />
-              <Input inputMode="numeric" value={opts.defaultLowStock} onChange={(e) => setOpts({ ...opts, defaultLowStock: +e.target.value || 0 })} />
-            </div>
-          </Field>
+        <p className="text-xs text-ink3">Preview: <b className="text-brand">{s.invoicePrefix}{String(s.invoiceNext).padStart(s.invoicePadding, '0')}{s.invoiceSuffix}</b></p>
+        <Toggle checked={s.resetInvoiceYearly} onChange={(v) => s.set({ resetInvoiceYearly: v })} label="Reset numbering every financial year" />
+      </Card>
+      <Card className="space-y-3">
+        <SectionTitle title="Tax" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Default GST %"><Input inputMode="decimal" value={s.defaultGst} onChange={(e) => s.set({ defaultGst: +e.target.value || 0 })} /></Field>
+          <Field label="Cess %"><Input inputMode="decimal" value={s.cessPct} onChange={(e) => s.set({ cessPct: +e.target.value || 0 })} /></Field>
+          <Field label="Rounding mode"><Select value={s.roundMode} onChange={(e) => s.set({ roundMode: e.target.value as any })}><option value="nearest">Nearest rupee</option><option value="up">Always up</option><option value="down">Always down</option></Select></Field>
         </div>
+        <Toggle checked={s.taxInclusive} onChange={(v) => s.set({ taxInclusive: v })} label="Prices include GST" hint="Turn off to add tax on top" />
+        <Toggle checked={s.roundOff} onChange={(v) => s.set({ roundOff: v })} label="Round off bill total" />
+        <Toggle checked={s.enableCess} onChange={(v) => s.set({ enableCess: v })} label="Enable cess" hint="Additional levy on top of GST" />
+        <Toggle checked={s.showHsn} onChange={(v) => s.set({ showHsn: v })} label="Show HSN/SAC on invoices" />
+        <Toggle checked={s.showSavings} onChange={(v) => s.set({ showSavings: v })} label="Show 'you saved' line" />
+        <Toggle checked={s.showAmountInWords} onChange={(v) => s.set({ showAmountInWords: v })} label="Print amount in words" />
+      </Card>
+      <Card className="space-y-3">
+        <SectionTitle title="Receipt text" />
+        <Field label="Footer note"><Input value={s.footerNote} onChange={(e) => s.set({ footerNote: e.target.value })} /></Field>
+        <Field label="Terms & conditions"><Textarea value={s.termsText} onChange={(e) => s.set({ termsText: e.target.value })} /></Field>
+        <Field label="Duplicate copy label"><Input value={s.duplicateLabel} onChange={(e) => s.set({ duplicateLabel: e.target.value })} /></Field>
+      </Card>
+    </div>
+  );
+}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <input ref={fileRef} type="file" accept=".json,.csv,application/json,text/csv" hidden
-            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-          <button className="btn-primary" onClick={() => fileRef.current?.click()} disabled={!!busy}>
-            {busy === 'file' ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Choose file
-          </button>
-          <button className="btn-soft" disabled={!text.trim() || !!busy} onClick={() => runImport(() => importText(text, withProgress()), 'paste')}>
-            <FileJson size={15} /> Import pasted JSON
-          </button>
-          <button className="btn-ghost" onClick={() => { setText(''); setPreview(null); setResult(''); }}>Clear</button>
-        </div>
-
-        <p className="label mt-3">Or paste JSON / CSV here</p>
-        <Textarea className="min-h-[130px] font-mono text-[11px]" value={text} placeholder='[{"product_name":"Paracetamol 650","price_per_unit":32,"stock_quantity":50}]'
-          onChange={(e) => { setText(e.target.value); analyse(e.target.value); }} />
-
-        {preview && (
-          <div className="mt-2 rounded-xl border border-brand/30 bg-brand/5 p-3 text-xs">
-            <p className="font-bold text-brand">Detected: {preview.kind} {preview.rows > 0 && `· ${num(preview.rows)} rows`}</p>
-            <pre className="mt-1 max-h-32 overflow-auto text-[10px] text-ink3">{JSON.stringify(preview.sample, null, 1).slice(0, 700)}</pre>
+/* ── CHARGES ───────────────────────────────────────────── */
+function ChargesTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <SectionTitle title="Extra charges" sub="Defaults applied at billing — the cashier can still override per bill." right={<Percent size={16} className="text-ink3" />} />
+      <Toggle checked={s.serviceChargeEnabled} onChange={(v) => s.set({ serviceChargeEnabled: v })} label="Apply service charge automatically" hint="Common for dine-in restaurants" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Service charge %"><Input inputMode="decimal" value={s.serviceChargePct} onChange={(e) => s.set({ serviceChargePct: +e.target.value || 0 })} /></Field>
+        <Field label="Packaging charge" hint="Added for takeaway / delivery"><Input inputMode="decimal" value={s.packagingCharge} onChange={(e) => s.set({ packagingCharge: +e.target.value || 0 })} /></Field>
+        <Field label="Delivery charge"><Input inputMode="decimal" value={s.deliveryCharge} onChange={(e) => s.set({ deliveryCharge: +e.target.value || 0 })} /></Field>
+        <Field label="Preview on a ₹1,000 bill">
+          <div className="input flex items-center justify-between">
+            <span className="text-ink3">Total with charges</span>
+            <span className="font-mono font-bold text-brand">{money(1000 + (s.serviceChargeEnabled ? 10 * s.serviceChargePct : 0) + s.packagingCharge + s.deliveryCharge, s.currency)}</span>
           </div>
-        )}
-
-        {progress && (
-          <div className="mt-3">
-            <div className="h-2 overflow-hidden rounded-full bg-surface2">
-              <div className="h-full bg-brand transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
-            </div>
-            <p className="mt-1 text-[11px] text-ink3">{num(progress.done)} / {num(progress.total)} rows written…</p>
-          </div>
-        )}
-        {result && <p className={cx('mt-2 rounded-xl border p-3 text-xs', result.startsWith('Error') ? 'border-bad/40 bg-bad/10 text-bad' : 'border-ok/40 bg-ok/10 text-ok')}>{result}</p>}
-      </Card>
-
-      <Card>
-        <SectionTitle title="One-tap sample catalogues" sub="Bundled with the app — perfect for demos or a quick start." />
-        <div className="space-y-2">
-          {BUNDLED.map((b) => (
-            <div key={b.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-ink">{b.label}</p>
-                <p className="text-[11px] text-ink3">{b.desc}</p>
-              </div>
-              <a className="btn-ghost px-2 py-1.5 text-xs" href={b.url} download><Download size={13} /> File</a>
-              <button className="btn-primary px-3 py-1.5 text-xs" disabled={!!busy}
-                onClick={() => runImport(() => importFromURL(b.url, withProgress()), b.id)}>
-                {busy === b.id ? <Loader2 size={14} className="animate-spin" /> : <Cloud size={14} />} Import
-              </button>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <SectionTitle title="Import from a URL" sub="Any public JSON endpoint (must allow CORS)." />
-        <UrlImport onRun={(url) => runImport(() => importFromURL(url, withProgress()), 'url')} busy={!!busy} />
-      </Card>
-
-      <Card>
-        <SectionTitle title="Accepted JSON formats" sub="Copy a template, fill it with your data, import. Unknown fields are ignored; missing ones are auto-filled." />
-        <div className="space-y-3">
-          {SAMPLE_FORMATS.map((f) => (
-            <div key={f.id} className="rounded-xl border border-line">
-              <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
-                <p className="flex-1 text-sm font-bold text-ink">{f.title}</p>
-                <button className="btn-ghost px-2 py-1 text-xs" onClick={() => { navigator.clipboard.writeText(JSON.stringify(f.sample, null, 2)); setCopied(f.id); setTimeout(() => setCopied(''), 1500); }}>
-                  {copied === f.id ? <Check size={13} /> : <Copy size={13} />} Copy
-                </button>
-                <button className="btn-ghost px-2 py-1 text-xs" onClick={() => download(`swiftpos-${f.id}-template.json`, JSON.stringify(f.sample, null, 2), 'application/json')}>
-                  <Download size={13} /> Template
-                </button>
-                <button className="btn-soft px-2 py-1 text-xs" onClick={() => { const t = JSON.stringify(f.sample, null, 2); setText(t); analyse(t); }}>Load into editor</button>
-              </div>
-              <p className="px-3 pt-2 text-[11px] text-ink3">{f.note}</p>
-              <pre className="max-h-56 overflow-auto p-3 font-mono text-[10.5px] leading-relaxed text-ink2">{JSON.stringify(f.sample, null, 2)}</pre>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 rounded-xl border border-line bg-surface2/50 p-3 text-[11px] leading-relaxed text-ink3">
-          <p className="mb-1 font-bold text-ink2">Field aliases understood automatically</p>
-          <p><b>Name:</b> product_name · item_name · name · title · medicine_name · dish</p>
-          <p><b>Price:</b> price_per_unit · selling_price · price · rate · mrp</p>
-          <p><b>Cost:</b> cost · cost_price · purchase_price · wholesale_price</p>
-          <p><b>Stock:</b> stock_quantity · stock · qty · quantity · on_hand</p>
-          <p><b>Barcode:</b> barcode · ean · upc · gtin · product_id</p>
-          <p><b>Category:</b> category · department · group · unit_type</p>
-          <p><b>Brand:</b> brand_name · brand · manufacturer · company</p>
-          <p><b>Others:</b> gst · hsn · batch · expiry · rack · low_stock · unit</p>
-        </div>
-      </Card>
-    </div>
+        </Field>
+      </div>
+      <Toggle checked={s.tipEnabled} onChange={(v) => s.set({ tipEnabled: v })} label="Show tip field at payment" />
+      <Toggle checked={s.chargesTaxable} onChange={(v) => s.set({ chargesTaxable: v })} label="Charges are taxable" hint="Apply GST on service/packaging charges" />
+    </Card>
   );
 }
 
-function UrlImport({ onRun, busy }: { onRun: (url: string) => void; busy: boolean }) {
-  const [url, setUrl] = useState('');
-  return (
-    <div className="flex gap-2">
-      <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/inventory.json" />
-      <button className="btn-primary" disabled={!url.trim() || busy} onClick={() => onRun(url.trim())}><Cloud size={15} /> Fetch</button>
-    </div>
-  );
-}
-
-/* ─────────────────────────── BACKUP ─────────────────────────── */
-
-function BackupTab() {
+/* ── PRINTING ──────────────────────────────────────────── */
+function PrintingTab() {
   const s = useSettings();
-  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <Card className="space-y-3">
+      <SectionTitle title="Printer & paper" sub="Works with any thermal or laser printer your device can reach." right={<Printer size={16} className="text-ink3" />} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Paper size"><Select value={s.printPaper} onChange={(e) => s.set({ printPaper: e.target.value as any })}>{['58mm', '80mm', 'A4'].map((p) => <option key={p}>{p}</option>)}</Select></Field>
+        <Field label="Copies per bill"><Select value={s.printCopies} onChange={(e) => s.set({ printCopies: +e.target.value })}>{[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}</Select></Field>
+        <Field label="Margin (mm)"><Input inputMode="decimal" value={s.printMargin} onChange={(e) => s.set({ printMargin: +e.target.value || 0 })} /></Field>
+        <Field label="Font scale"><Input inputMode="decimal" value={s.printFontScale} onChange={(e) => s.set({ printFontScale: +e.target.value || 1 })} /></Field>
+        <Field label="Density"><Select value={s.printDensity} onChange={(e) => s.set({ printDensity: e.target.value as any })}>{['compact', 'normal', 'airy'].map((d) => <option key={d}>{d}</option>)}</Select></Field>
+      </div>
+      <Toggle checked={s.autoPrint} onChange={(v) => s.set({ autoPrint: v })} label="Auto-print receipt after payment" />
+      <Toggle checked={s.autoPrintKot} onChange={(v) => s.set({ autoPrintKot: v })} label="Auto-print kitchen KOT" hint="Restaurants: fires when the order is saved" />
+      <Toggle checked={s.printLogo} onChange={(v) => s.set({ printLogo: v })} label="Print logo on invoices" />
+      <Toggle checked={s.printBarcodeOnBill} onChange={(v) => s.set({ printBarcodeOnBill: v })} label="Print invoice barcode" hint="Scan the bill to pull it up instantly" />
+      <Toggle checked={s.printQrOnBill} onChange={(v) => s.set({ printQrOnBill: v })} label="Print UPI QR on bill" />
+      <Toggle checked={s.openDrawer} onChange={(v) => s.set({ openDrawer: v })} label="Send cash-drawer kick signal" hint="Requires a drawer wired to the printer" />
+    </Card>
+  );
+}
+
+/* ── POS ───────────────────────────────────────────────── */
+function PosTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Default layout"><Select value={s.posLayout} onChange={(e) => s.set({ posLayout: e.target.value as any })}><option value="grid">Grid</option><option value="list">List</option></Select></Field>
+        <Field label="Grid columns (mobile)"><Input inputMode="numeric" value={s.gridCols} onChange={(e) => s.set({ gridCols: Math.min(5, Math.max(2, +e.target.value || 3)) })} /></Field>
+        <Field label="Quick cash buttons"><Input value={s.quickCash.join(', ')} onChange={(e) => s.set({ quickCash: e.target.value.split(',').map((x) => +x.trim()).filter(Boolean) })} /></Field>
+      </div>
+      <Toggle checked={s.showImages} onChange={(v) => s.set({ showImages: v })} label="Show product icons" />
+      <Toggle checked={s.oneTapAdd} onChange={(v) => s.set({ oneTapAdd: v })} label="One-tap add to cart" hint="Off = ask quantity first" />
+      <Toggle checked={s.autoFocusSearch} onChange={(v) => s.set({ autoFocusSearch: v })} label="Auto-focus search on open" />
+      <Toggle checked={s.confirmClearCart} onChange={(v) => s.set({ confirmClearCart: v })} label="Confirm before clearing the cart" />
+      <Toggle checked={s.keepCustomerAfterSale} onChange={(v) => s.set({ keepCustomerAfterSale: v })} label="Keep customer attached after a sale" />
+      <Toggle checked={s.customerRequired} onChange={(v) => s.set({ customerRequired: v })} label="Require a customer on every bill" />
+      <Toggle checked={s.soundEnabled} onChange={(v) => s.set({ soundEnabled: v })} label="Sound feedback" />
+      <Toggle checked={s.hapticEnabled} onChange={(v) => s.set({ hapticEnabled: v })} label="Haptic vibration (mobile)" />
+      <Toggle checked={s.scannerBeep} onChange={(v) => s.set({ scannerBeep: v })} label="Beep on barcode scan" />
+    </Card>
+  );
+}
+
+/* ── INVENTORY ─────────────────────────────────────────── */
+function InventoryTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Expiry alert (days)"><Input inputMode="numeric" value={s.expiryAlertDays} onChange={(e) => s.set({ expiryAlertDays: +e.target.value || 30 })} /></Field>
+        <Field label="Auto-reorder multiplier" hint="Suggested PO qty = low-stock × this"><Input inputMode="decimal" value={s.reorderMultiplier} onChange={(e) => s.set({ reorderMultiplier: +e.target.value || 2 })} /></Field>
+        <Field label="Barcode prefix for generated codes"><Input value={s.barcodePrefix} onChange={(e) => s.set({ barcodePrefix: e.target.value })} /></Field>
+        <Field label="Label columns per sheet"><Input inputMode="numeric" value={s.labelColumns} onChange={(e) => s.set({ labelColumns: Math.min(6, Math.max(1, +e.target.value || 3)) })} /></Field>
+      </div>
+      <Toggle checked={s.lowStockAlert} onChange={(v) => s.set({ lowStockAlert: v })} label="Low stock alerts" />
+      <Toggle checked={s.negativeStock} onChange={(v) => s.set({ negativeStock: v })} label="Allow selling out-of-stock items" />
+      <Toggle checked={s.autoReorder} onChange={(v) => s.set({ autoReorder: v })} label="Suggest purchase orders automatically" />
+      <Toggle checked={s.labelShowMrp} onChange={(v) => s.set({ labelShowMrp: v })} label="Show MRP on price labels" />
+      <Toggle checked={s.labelShowName} onChange={(v) => s.set({ labelShowName: v })} label="Show product name on labels" />
+    </Card>
+  );
+}
+
+/* ── LOYALTY ───────────────────────────────────────────── */
+function LoyaltyTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <Toggle checked={s.loyaltyEnabled} onChange={(v) => s.set({ loyaltyEnabled: v })} label="Enable loyalty points" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label={`Points per ${s.currency}100`}><Input inputMode="decimal" value={s.pointsPer100} onChange={(e) => s.set({ pointsPer100: +e.target.value || 0 })} /></Field>
+        <Field label="Value of 1 point"><Input inputMode="decimal" value={s.pointValue} onChange={(e) => s.set({ pointValue: +e.target.value || 0 })} /></Field>
+        <Field label="Minimum redemption"><Input inputMode="numeric" value={s.minRedeem} onChange={(e) => s.set({ minRedeem: +e.target.value || 0 })} /></Field>
+        <Field label="Points expire after (days, 0 = never)"><Input inputMode="numeric" value={s.pointsExpiryDays} onChange={(e) => s.set({ pointsExpiryDays: +e.target.value || 0 })} /></Field>
+        <Field label="Birthday bonus points"><Input inputMode="numeric" value={s.birthdayBonus} onChange={(e) => s.set({ birthdayBonus: +e.target.value || 0 })} /></Field>
+      </div>
+    </Card>
+  );
+}
+
+/* ── MESSAGING ─────────────────────────────────────────── */
+function MessagingTab() {
+  const s = useSettings();
   return (
     <div className="space-y-3">
-      <Card>
-        <SectionTitle title="Backup & restore" sub={s.lastBackup ? `Last backup ${dt(s.lastBackup)}` : 'No backup taken yet'} />
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-primary" onClick={async () => { await exportBackup(); toast('Backup downloaded'); }}><Download size={16} /> Export full backup</button>
-          <input ref={fileRef} type="file" accept=".json" hidden onChange={async (e) => {
-            const f = e.target.files?.[0]; if (!f) return;
-            try { const { importBackup } = await import('@/lib/backup'); await importBackup(await f.text()); toast('Backup restored'); }
-            catch (err: any) { toast(err.message ?? 'Restore failed', 'err'); }
-          }} />
-          <button className="btn-soft" onClick={() => fileRef.current?.click()}><Upload size={15} /> Restore backup</button>
-        </div>
+      <Card className="space-y-3">
+        <SectionTitle title="WhatsApp templates" sub="Placeholders: {customer} {shop} {invoice} {total} {due} {footer}" right={<MessageSquare size={16} className="text-ink3" />} />
+        <Field label="Bill message"><Textarea value={s.waBillTemplate} onChange={(e) => s.set({ waBillTemplate: e.target.value })} /></Field>
+        <Field label="Payment reminder"><Textarea value={s.waDueTemplate} onChange={(e) => s.set({ waDueTemplate: e.target.value })} /></Field>
+        <Field label="Marketing blast"><Textarea value={s.waMarketingTemplate} onChange={(e) => s.set({ waMarketingTemplate: e.target.value })} /></Field>
       </Card>
-      <Card>
-        <SectionTitle title="Demo data" sub="Load the built-in sample store, or wipe everything and start clean." />
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-soft" onClick={async () => { await seedIfEmpty(true); toast('Demo data regenerated'); }}><Sparkles size={15} /> Reload demo store</button>
-          <ConfirmBtn onConfirm={async () => { await wipeAll(); toast('All data erased'); }}><Trash2 size={15} /> Erase all data</ConfirmBtn>
-          <ConfirmBtn onConfirm={() => { useSettings.getState().reset(); toast('Settings reset'); }}><RefreshCw size={15} /> Reset settings</ConfirmBtn>
-        </div>
-      </Card>
-      <Card>
-        <SectionTitle title="Storage" sub="Everything lives in your browser (IndexedDB) — offline first, nothing leaves the device." />
-        <StorageInfo />
+      <Card className="space-y-2">
+        <SectionTitle title="Alerts" right={<Bell size={16} className="text-ink3" />} />
+        <Toggle checked={s.notifyLowStock} onChange={(v) => s.set({ notifyLowStock: v })} label="Low stock notifications" />
+        <Toggle checked={s.notifyExpiry} onChange={(v) => s.set({ notifyExpiry: v })} label="Expiry notifications" />
+        <Toggle checked={s.notifyDues} onChange={(v) => s.set({ notifyDues: v })} label="Credit due reminders" />
+        <Toggle checked={s.dailySummary} onChange={(v) => s.set({ dailySummary: v })} label="Daily summary card on dashboard" />
       </Card>
     </div>
   );
 }
 
-function StorageInfo() {
-  const [info, setInfo] = useState<string>('checking…');
-  useEffect(() => {
-    navigator.storage?.estimate?.().then((e) => {
-      const used = ((e.usage ?? 0) / 1048576).toFixed(1);
-      const quota = ((e.quota ?? 0) / 1048576 / 1024).toFixed(2);
-      setInfo(`${used} MB used of ~${quota} GB available`);
-    }).catch(() => setInfo('unavailable'));
-  }, []);
-  return <p className="text-sm text-ink2">{info}</p>;
+/* ── SECURITY ──────────────────────────────────────────── */
+function SecurityTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <SectionTitle title="Access control" right={<ShieldCheck size={16} className="text-ink3" />} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="App lock PIN" hint="Blank = disabled"><Input inputMode="numeric" maxLength={6} value={s.appLockPin} onChange={(e) => s.set({ appLockPin: e.target.value.replace(/\D/g, '') })} /></Field>
+        <Field label="Auto-lock after (minutes, 0 = never)"><Input inputMode="numeric" value={s.autoLockMinutes} onChange={(e) => s.set({ autoLockMinutes: +e.target.value || 0 })} /></Field>
+        <Field label="Max discount a cashier can give (%)"><Input inputMode="decimal" value={s.restrictDiscountPct} onChange={(e) => s.set({ restrictDiscountPct: +e.target.value || 0 })} /></Field>
+      </div>
+      <Toggle checked={s.requirePin} onChange={(v) => s.set({ requirePin: v })} label="Require staff PIN for refunds & price overrides" />
+      <Toggle checked={s.restrictRefunds} onChange={(v) => s.set({ restrictRefunds: v })} label="Only managers can refund" />
+      <Toggle checked={s.hideCostPrices} onChange={(v) => s.set({ hideCostPrices: v })} label="Hide cost prices & margins from staff" />
+      <ConfirmBtn onConfirm={() => { s.set({ appLockPin: '', autoLockMinutes: 0, requirePin: false }); toast('Security reset'); }}>Reset security settings</ConfirmBtn>
+    </Card>
+  );
+}
+
+/* ── APPEARANCE ────────────────────────────────────────── */
+function AppearanceTab() {
+  const s = useSettings();
+  return (
+    <Card className="space-y-4">
+      <div>
+        <p className="label">Theme</p>
+        <div className="flex gap-2">
+          {(['amoled', 'light'] as const).map((t) => (
+            <button key={t} onClick={() => s.set({ theme: t })} className={cx('chip capitalize', s.theme === t && 'chip-on')}>{t === 'amoled' ? 'AMOLED black' : 'Light'}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="label">Accent colour</p>
+        <div className="flex flex-wrap gap-2">
+          {(['cyan', 'mint', 'violet', 'amber', 'rose', 'lime'] as const).map((a) => (
+            <button key={a} onClick={() => s.set({ accent: a })} className={cx('chip capitalize', s.accent === a && 'chip-on')}>{a}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="label">Density</p>
+        <div className="flex gap-2">
+          {(['compact', 'normal', 'cozy'] as const).map((d) => (
+            <button key={d} onClick={() => s.set({ density: d })} className={cx('chip capitalize', s.density === d && 'chip-on')}>{d}</button>
+          ))}
+        </div>
+      </div>
+      <Toggle checked={s.animations} onChange={(v) => s.set({ animations: v })} label="Interface animations" />
+    </Card>
+  );
+}
+
+/* ── ABOUT ─────────────────────────────────────────────── */
+function AboutTab() {
+  const { profile } = useShop();
+  const s = useSettings();
+  return (
+    <Card className="space-y-3">
+      <SectionTitle title="SwiftPOS Pro v7.1" sub="Offline-first point of sale for any business" right={<Info size={16} className="text-ink3" />} />
+      <div className="grid gap-2 sm:grid-cols-3">
+        {[['Shop profile', `${profile.emoji} ${profile.label}`], ['Theme', s.theme], ['Templates', '20 built-in + custom'],
+          ['Storage', 'IndexedDB (offline)'], ['Stack', 'React · TS · Vite · Dexie'], ['Licence', 'MIT']].map(([k, v]) => (
+          <div key={k} className="rounded-xl border border-line bg-surface2/50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-ink3">{k}</p>
+            <p className="truncate text-sm font-bold text-ink">{v}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-ink3">Every byte of your data stays on this device. Take regular backups from the Backup tab.</p>
+    </Card>
+  );
 }

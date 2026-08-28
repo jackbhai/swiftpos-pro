@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, Package, Users, ReceiptText, Truck,
-  Wallet, BarChart3, Ticket, UserCog, Settings, Boxes, Clock, HelpCircle, Utensils,
+  Wallet, BarChart3, Ticket, UserCog, Settings, Boxes, Clock, HelpCircle, Utensils, Tag,
 } from 'lucide-react';
 
 export interface NavItem { path: string; label: string; icon: any; group: string; hint?: string }
@@ -16,6 +16,7 @@ export const NAV: NavItem[] = [
   { path: '/expenses', label: 'Expenses', icon: Wallet, group: 'Money', hint: 'Costs & cash out' },
   { path: '/reports', label: 'Reports', icon: BarChart3, group: 'Money', hint: 'Analytics & GST' },
   { path: '/offers', label: 'Offers', icon: Ticket, group: 'Money', hint: 'Coupons & loyalty' },
+  { path: '/labels', label: 'Labels', icon: Tag, group: 'Ops', hint: 'Barcode & price tags' },
   { path: '/tables', label: 'Tables', icon: Utensils, group: 'Ops', hint: 'Restaurant floor' },
   { path: '/staff', label: 'Staff', icon: UserCog, group: 'Ops', hint: 'Users, shifts & PINs' },
   { path: '/activity', label: 'Activity', icon: Clock, group: 'Ops', hint: 'Audit log' },

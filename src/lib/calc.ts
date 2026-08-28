@@ -4,11 +4,17 @@ export interface Totals {
   count: number; qty: number; subTotal: number; itemDiscount: number;
   billDiscount: number; couponValue: number; taxable: number; gstAmount: number;
   cgst: number; sgst: number; roundOff: number; total: number; profit: number; margin: number;
+  serviceCharge: number; deliveryCharge: number; packagingCharge: number; tip: number; charges: number;
 }
 
 export function computeTotals(
   lines: CartLine[],
-  opts: { billDiscount?: number; billDiscountType?: 'flat' | 'percent'; coupon?: Coupon | null; taxInclusive?: boolean; roundOff?: boolean; pointsRedeemed?: number; pointValue?: number } = {},
+  opts: {
+    billDiscount?: number; billDiscountType?: 'flat' | 'percent'; coupon?: Coupon | null;
+    taxInclusive?: boolean; roundOff?: boolean; pointsRedeemed?: number; pointValue?: number;
+    serviceChargePct?: number; deliveryCharge?: number; packagingCharge?: number; tip?: number;
+    roundMode?: 'nearest' | 'up' | 'down';
+  } = {},
 ): Totals {
   const { billDiscountType = 'flat', taxInclusive = true, roundOff: doRound = true } = opts;
   const gross = lines.reduce((s, l) => s + l.price * l.qty, 0);
@@ -40,9 +46,17 @@ export function computeTotals(
     gstAmount += taxInclusive ? (lineNet * l.gst) / (100 + l.gst) : (lineNet * l.gst) / 100;
   }
   const taxable = taxInclusive ? net - gstAmount : net;
-  const preRound = taxInclusive ? net : net + gstAmount;
-  const total = doRound ? Math.round(preRound) : +preRound.toFixed(2);
-  const profit = lines.reduce((s, l) => s + (l.price - l.cost) * l.qty - (l.discount || 0), 0) - billDiscount - couponValue - pointsCut;
+  const serviceCharge = +(((opts.serviceChargePct || 0) * net) / 100).toFixed(2);
+  const deliveryCharge = opts.deliveryCharge || 0;
+  const packagingCharge = opts.packagingCharge || 0;
+  const tip = opts.tip || 0;
+  const charges = +(serviceCharge + deliveryCharge + packagingCharge + tip).toFixed(2);
+  const preRound = (taxInclusive ? net : net + gstAmount) + charges;
+  const rm = opts.roundMode ?? 'nearest';
+  const total = doRound
+    ? (rm === 'up' ? Math.ceil(preRound) : rm === 'down' ? Math.floor(preRound) : Math.round(preRound))
+    : +preRound.toFixed(2);
+  const profit = lines.reduce((s, l) => s + (l.price - l.cost) * l.qty - (l.discount || 0), 0) - billDiscount - couponValue - pointsCut + serviceCharge + packagingCharge;
 
   return {
     count: lines.length,
@@ -57,6 +71,7 @@ export function computeTotals(
     sgst: +(gstAmount / 2).toFixed(2),
     roundOff: +(total - preRound).toFixed(2),
     total,
+    serviceCharge, deliveryCharge, packagingCharge, tip, charges,
     profit: +profit.toFixed(2),
     margin: total > 0 ? +((profit / total) * 100).toFixed(1) : 0,
   };

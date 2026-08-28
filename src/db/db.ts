@@ -1,7 +1,7 @@
 import Dexie, { Table as DexTable } from 'dexie';
 import type {
   Product, Sale, Customer, Vendor, PurchaseOrder, Expense, StockLog,
-  Activity, HeldBill, Coupon, Staff, Shift, Table, Reservation,
+  Activity, HeldBill, Coupon, Staff, Shift, Table, Reservation, CustomTemplate, Quote,
 } from './types';
 
 export class SwiftDB extends Dexie {
@@ -19,6 +19,8 @@ export class SwiftDB extends Dexie {
   shifts!: DexTable<Shift, string>;
   restaurantTables!: DexTable<Table, string>;
   reservations!: DexTable<Reservation, string>;
+  templates!: DexTable<CustomTemplate, string>;
+  quotes!: DexTable<Quote, string>;
 
   constructor() {
     super('swiftpos-pro-v7');
@@ -37,6 +39,10 @@ export class SwiftDB extends Dexie {
       shifts: 'id, openedAt, closedAt',
       restaurantTables: 'id, name, area, status',
       reservations: 'id, ts, status',
+    });
+    this.version(2).stores({
+      templates: 'id, name, paper, createdAt',
+      quotes: 'id, ts, customerId, status',
     });
   }
 }

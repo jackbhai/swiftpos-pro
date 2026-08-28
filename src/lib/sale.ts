@@ -16,11 +16,13 @@ export async function finalizeSale(opts: {
 
   const t = computeTotals(lines, {
     billDiscount: cart.billDiscount, billDiscountType: cart.billDiscountType,
-    coupon: cart.coupon, taxInclusive: s.taxInclusive, roundOff: s.roundOff,
+    coupon: cart.coupon, taxInclusive: s.taxInclusive, roundOff: s.roundOff, roundMode: s.roundMode,
     pointsRedeemed: cart.pointsRedeemed, pointValue: s.pointValue,
+    serviceChargePct: cart.serviceChargePct, deliveryCharge: cart.deliveryCharge,
+    packagingCharge: cart.packagingCharge, tip: cart.tip,
   });
 
-  const invoiceNo = s.invoicePrefix + String(s.invoiceNext).padStart(5, '0');
+  const invoiceNo = s.invoicePrefix + String(s.invoiceNext).padStart(s.invoicePadding ?? 5, '0') + (s.invoiceSuffix ?? '');
   const pointsEarned = s.loyaltyEnabled && cart.customerId ? Math.floor((t.total / 100) * s.pointsPer100) : 0;
 
   const sale: Sale = {
@@ -28,6 +30,7 @@ export async function finalizeSale(opts: {
     subTotal: t.subTotal, itemDiscount: t.itemDiscount, billDiscount: t.billDiscount,
     couponCode: cart.coupon?.code, couponValue: t.couponValue, taxable: t.taxable,
     gstAmount: t.gstAmount, roundOff: t.roundOff, total: t.total, profit: t.profit,
+    serviceCharge: t.serviceCharge, deliveryCharge: t.deliveryCharge, packagingCharge: t.packagingCharge, tip: t.tip,
     payMode: opts.payMode, splits: opts.splits, tendered: opts.tendered,
     change: opts.tendered ? +(opts.tendered - t.total).toFixed(2) : undefined,
     customerId: cart.customerId, customerName: cart.customerName,
@@ -63,7 +66,9 @@ export async function finalizeSale(opts: {
 
   await logActivity('sale', `${invoiceNo} · ₹${t.total} via ${opts.payMode}`, session.staff?.name);
   s.set({ invoiceNext: s.invoiceNext + 1 });
+  const keepCust = s.keepCustomerAfterSale ? { id: cart.customerId, name: cart.customerName } : null;
   cart.clear();
+  if (keepCust?.id) cart.setCustomer(keepCust.id, keepCust.name);
   return sale;
 }
 

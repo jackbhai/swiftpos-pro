@@ -1,18 +1,36 @@
-import { Printer, Share2, Download, MessageCircle, Copy } from 'lucide-react';
-import { Modal } from '@/components/ui';
+import { useEffect, useState } from 'react';
+import { Printer, Share2, Download, MessageCircle, Copy, FileText, ChefHat, Eye } from 'lucide-react';
+import { Modal, Select, Field } from '@/components/ui';
 import type { Sale } from '@/db/types';
-import { useSettings } from '@/store/settings';
-import { receiptHTML, printHTML, saleText, waLink } from '@/lib/receipt';
+import { useSettings, useShop } from '@/store/settings';
+import { renderReceipt, printHTML, saleText, waLink, allTemplates } from '@/lib/receipt';
+import type { TemplateDef } from '@/lib/templates';
 import { download } from '@/lib/csv';
-import { money, dt } from '@/lib/format';
+import { money } from '@/lib/format';
 import { toast } from '@/store/ui';
+import UpiPay from './UpiPay';
 
 export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onClose: () => void }) {
   const s = useSettings();
+  const { modules } = useShop();
+  const [templates, setTemplates] = useState<TemplateDef[]>([]);
+  const [tplId, setTplId] = useState(s.defaultTemplate);
+  const [preview, setPreview] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => { allTemplates().then(setTemplates); }, [sale]);
+  useEffect(() => { setTplId(s.defaultTemplate); }, [sale?.id]);
+  useEffect(() => {
+    if (!sale || !showPreview) return;
+    renderReceipt(sale, s, tplId).then(setPreview);
+  }, [sale?.id, tplId, showPreview]);
+
   if (!sale) return null;
   const text = saleText(sale, s);
+  const doPrint = async (id: string, copyLabel?: string) => printHTML(await renderReceipt(sale, s, id, { copyLabel }), s.printCopies);
+
   return (
-    <Modal open={!!sale} onClose={onClose} title={`Invoice ${sale.invoiceNo}`}
+    <Modal open={!!sale} onClose={onClose} title={`Invoice ${sale.invoiceNo}`} wide
       footer={<button className="btn-primary w-full py-3" onClick={onClose}>Done · New sale</button>}>
       <div className="rounded-2xl border border-ok/30 bg-ok/5 p-4 text-center">
         <p className="text-[11px] uppercase tracking-widest text-ink3">Paid · {sale.payMode.toUpperCase()}</p>
@@ -21,30 +39,42 @@ export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onC
         {!!sale.pointsEarned && <p className="text-xs text-brand">+{sale.pointsEarned} loyalty points</p>}
       </div>
 
-      <div className="mt-3 rounded-xl border border-line bg-surface2/50 p-3 font-mono text-[11px] text-ink2">
-        <p className="text-center font-bold text-ink">{s.shopName}</p>
-        <p className="text-center">{dt(sale.ts)}</p>
-        <div className="my-2 border-t border-dashed border-line" />
-        {sale.lines.map((l) => (
-          <div key={l.id} className="flex justify-between gap-2"><span className="truncate">{l.name} ×{l.qty}</span><span>{(l.price * l.qty).toFixed(2)}</span></div>
-        ))}
-        <div className="my-2 border-t border-dashed border-line" />
-        <div className="flex justify-between"><span>GST</span><span>{sale.gstAmount.toFixed(2)}</span></div>
-        <div className="flex justify-between font-bold text-ink"><span>TOTAL</span><span>{sale.total.toFixed(2)}</span></div>
+      {sale.payMode === 'upi' && s.showUpiQrOnPayment && s.upiAccounts.some((u) => u.active) && (
+        <div className="mt-3"><UpiPay amount={sale.total} note={sale.invoiceNo} compact /></div>
+      )}
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <Field label="Print template">
+          <Select value={tplId} onChange={(e) => setTplId(e.target.value)}>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.paper}</option>)}
+          </Select>
+        </Field>
+        <Field label="Copies">
+          <Select value={s.printCopies} onChange={(e) => s.set({ printCopies: +e.target.value })}>
+            {[1, 2, 3].map((n) => <option key={n} value={n}>{n} cop{n > 1 ? 'ies' : 'y'}</option>)}
+          </Select>
+        </Field>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <button className="btn-soft" onClick={() => printHTML(receiptHTML(sale, s, '80mm'))}><Printer size={15} /> Print 80mm</button>
-        <button className="btn-soft" onClick={() => printHTML(receiptHTML(sale, s, '58mm'))}><Printer size={15} /> Print 58mm</button>
-        <button className="btn-soft" onClick={() => printHTML(receiptHTML(sale, s, 'a4'))}><Printer size={15} /> A4 Invoice</button>
-        <button className="btn-soft" onClick={() => download(`${sale.invoiceNo}.html`, receiptHTML(sale, s, '80mm'), 'text/html')}><Download size={15} /> Download</button>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <button className="btn-primary" onClick={() => doPrint(tplId)}><Printer size={15} /> Print</button>
+        <button className="btn-soft" onClick={() => doPrint(s.a4Template)}><FileText size={15} /> A4 invoice</button>
+        {modules.tables && <button className="btn-soft" onClick={() => doPrint(s.kotTemplate)}><ChefHat size={15} /> Kitchen KOT</button>}
+        <button className="btn-soft" onClick={() => doPrint(tplId, s.duplicateLabel)}><Copy size={15} /> Duplicate</button>
+        <button className="btn-soft" onClick={() => setShowPreview((v) => !v)}><Eye size={15} /> {showPreview ? 'Hide' : 'Preview'}</button>
+        <button className="btn-soft" onClick={async () => download(`${sale.invoiceNo}.html`, await renderReceipt(sale, s, tplId), 'text/html')}><Download size={15} /> Save HTML</button>
         <button className="btn-soft" onClick={() => window.open(waLink('', text), '_blank')}><MessageCircle size={15} /> WhatsApp</button>
         <button className="btn-soft" onClick={async () => {
-          try { if (navigator.share) await navigator.share({ title: sale.invoiceNo, text }); else { await navigator.clipboard.writeText(text); toast('Receipt copied'); } }
-          catch { /* cancelled */ }
+          try { if (navigator.share) await navigator.share({ title: sale.invoiceNo, text }); else { await navigator.clipboard.writeText(text); toast('Receipt copied'); } } catch { /* cancelled */ }
         }}><Share2 size={15} /> Share</button>
-        <button className="btn-soft col-span-2" onClick={() => { navigator.clipboard.writeText(text); toast('Copied to clipboard'); }}><Copy size={15} /> Copy text</button>
+        <button className="btn-soft" onClick={() => { navigator.clipboard.writeText(text); toast('Copied'); }}><Copy size={15} /> Copy text</button>
       </div>
+
+      {showPreview && (
+        <div className="mt-3 overflow-hidden rounded-xl border border-line bg-white">
+          <iframe title="preview" srcDoc={preview} className="h-[420px] w-full" />
+        </div>
+      )}
     </Modal>
   );
 }

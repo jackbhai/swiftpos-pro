@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Menu, Search, Calculator as CalcIcon, Sun, Moon, Wifi, WifiOff, Bell, X, ShoppingCart,
+  Menu, Search, Calculator as CalcIcon, Sun, Moon, Wifi, WifiOff, Bell, X, ShoppingCart, Lock,
 } from 'lucide-react';
 import { NAV, BOTTOM_NAV } from './nav';
 import { useUI } from '@/store/ui';
@@ -14,16 +14,17 @@ import { useHotkeys } from '@/hooks/useKeys';
 import Toasts from './Toasts';
 import CommandPalette from './CommandPalette';
 import Calculator from './Calculator';
+import LockScreen from './LockScreen';
 
 export default function AppShell() {
-  const { sidebarOpen, setSidebar, setPalette, setCalc, online, setOnline } = useUI();
+  const { sidebarOpen, setSidebar, setPalette, setCalc, online, setOnline, setLocked } = useUI();
   const settings = useSettings();
   const cart = useCart();
   const products = useProducts();
   const loc = useLocation();
   const nav = useNavigate();
 
-  useEffect(() => { applyTheme(settings); }, [settings.theme, settings.accent, settings.density]);
+  useEffect(() => { applyTheme(settings); }, [settings.theme, settings.accent, settings.density, settings.fontScale]);
   useEffect(() => { setSidebar(false); }, [loc.pathname]);
   useEffect(() => {
     const on = () => setOnline(true), off = () => setOnline(false);
@@ -80,6 +81,7 @@ export default function AppShell() {
             <Bell size={18} />
             {alerts > 0 && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded-full bg-bad px-1 text-[9px] font-bold leading-4 text-white">{alerts}</span>}
           </NavLink>
+          {settings.appLockPin && <button onClick={() => setLocked(true)} className="rounded-lg p-2 text-ink2 hover:bg-surface2" title="Lock app"><Lock size={17} /></button>}
           <button onClick={() => settings.set({ theme: settings.theme === 'amoled' ? 'light' : 'amoled' })} className="rounded-lg p-2 text-ink2 hover:bg-surface2">
             {settings.theme === 'amoled' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -113,6 +115,7 @@ export default function AppShell() {
         )}
       </div>
 
+      <LockScreen />
       <Toasts />
       <CommandPalette />
       <Calculator />

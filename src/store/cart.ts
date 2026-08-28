@@ -14,6 +14,10 @@ interface CartStore {
   note: string;
   channel: 'counter' | 'delivery' | 'takeaway' | 'online';
   tableId?: string;
+  serviceChargePct: number;
+  deliveryCharge: number;
+  packagingCharge: number;
+  tip: number;
   add: (p: Product, qty?: number, variant?: string) => void;
   setQty: (lineId: string, qty: number) => void;
   inc: (lineId: string, d: number) => void;
@@ -29,6 +33,7 @@ interface CartStore {
   setNote: (s: string) => void;
   setChannel: (c: CartStore['channel']) => void;
   setTable: (id?: string) => void;
+  setCharges: (p: Partial<{ serviceChargePct: number; deliveryCharge: number; packagingCharge: number; tip: number }>) => void;
   load: (lines: CartLine[], customerId?: string, customerName?: string) => void;
 }
 
@@ -37,6 +42,7 @@ export const useCart = create<CartStore>()(
     (set, get) => ({
       lines: [], billDiscount: 0, billDiscountType: 'flat', coupon: null,
       pointsRedeemed: 0, note: '', channel: 'counter',
+      serviceChargePct: 0, deliveryCharge: 0, packagingCharge: 0, tip: 0,
       add: (p, qty = 1, variant) =>
         set((s) => {
           const found = s.lines.find((l) => l.productId === p.id && l.variant === variant);
@@ -55,7 +61,7 @@ export const useCart = create<CartStore>()(
       setLineDiscount: (id, amt) => set((s) => ({ lines: s.lines.map((l) => (l.id === id ? { ...l, discount: amt } : l)) })),
       setLineNote: (id, note) => set((s) => ({ lines: s.lines.map((l) => (l.id === id ? { ...l, note } : l)) })),
       remove: (id) => set((s) => ({ lines: s.lines.filter((l) => l.id !== id) })),
-      clear: () => set({ lines: [], billDiscount: 0, coupon: null, pointsRedeemed: 0, note: '', customerId: undefined, customerName: undefined, tableId: undefined }),
+      clear: () => set({ lines: [], billDiscount: 0, coupon: null, pointsRedeemed: 0, note: '', customerId: undefined, customerName: undefined, tableId: undefined, serviceChargePct: 0, deliveryCharge: 0, packagingCharge: 0, tip: 0 }),
       setCustomer: (customerId, customerName) => set({ customerId, customerName }),
       setBillDiscount: (billDiscount, billDiscountType) => set({ billDiscount, ...(billDiscountType ? { billDiscountType } : {}) }),
       setCoupon: (coupon) => set({ coupon }),
@@ -63,6 +69,7 @@ export const useCart = create<CartStore>()(
       setNote: (note) => set({ note }),
       setChannel: (channel) => set({ channel }),
       setTable: (tableId) => set({ tableId }),
+      setCharges: (p) => set(p as any),
       load: (lines, customerId, customerName) => set({ lines, customerId, customerName }),
     }),
     { name: 'swiftpos-cart' },

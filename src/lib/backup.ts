@@ -2,7 +2,7 @@ import { db } from '@/db/db';
 import { download } from './csv';
 import { useSettings } from '@/store/settings';
 
-const TABLES = ['products','sales','customers','vendors','purchaseOrders','expenses','stockLogs','activity','holds','coupons','staff','shifts','restaurantTables','reservations'] as const;
+const TABLES = ['products','sales','customers','vendors','purchaseOrders','expenses','stockLogs','activity','holds','coupons','staff','shifts','restaurantTables','reservations','templates','quotes'] as const;
 
 export async function exportBackup() {
   const data: any = { app: 'SwiftPOS Pro', version: 7, ts: Date.now(), settings: useSettings.getState() };
