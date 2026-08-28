@@ -526,3 +526,13 @@
 430. Receipt CSS is scoped while rasterising, so the app's theme never flickers
 431. Retina-quality output (2× pixel ratio) with white background for readability
 432. Automatic monospace-canvas fallback if a browser blocks HTML rasterisation — an image is always produced
+
+## v10.2 — share sheet everywhere (433–440)
+433. Single **WhatsApp** button on the payment receipt now opens the full share sheet (text / image / download)
+434. **Download image** button placed directly on the receipt screen
+435. Share sheet added to **Customers → purchase history** (send any old bill to that customer)
+436. Share sheet added to the **Returns desk** bill search list
+437. Share sheet available from **Sales history** on every invoice
+438. Same sheet everywhere: text, image, save PNG, preview, copy, SMS, any app
+439. Phone number is pre-filled from the customer record when available
+440. Service worker bumped to v10.2 so every device picks up the new bill-sharing UI

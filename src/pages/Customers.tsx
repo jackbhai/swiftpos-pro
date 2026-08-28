@@ -9,6 +9,7 @@ import { useSettings, useShop } from '@/store/settings';
 import { useCart } from '@/store/cart';
 import { toast } from '@/store/ui';
 import { waLink } from '@/lib/receipt';
+import ShareBillModal from '@/components/pos/ShareBillModal';
 import { useNavigate } from 'react-router-dom';
 import type { Customer } from '@/db/types';
 
@@ -19,6 +20,7 @@ const tier = (spend: number) => spend >= 25000 ? { label: 'Platinum', tone: 'bra
 export default function Customers() {
   const customers = useCustomers() || [];
   const sales = useSales() || [];
+  const [shareSale, setShareSale] = useState<any>(null);
   const s = useSettings();
   const { terms } = useShop();
   const cart = useCart();
@@ -103,6 +105,7 @@ export default function Customers() {
       )}
       {list.length > limit && <button className="btn-ghost w-full" onClick={() => setLimit((l) => l + 60)}>Load more</button>}
 
+      <ShareBillModal sale={shareSale} onClose={() => setShareSale(null)} />
       <CustomerEditor customer={edit} onClose={() => setEdit(null)} onSave={save} />
       <Modal open={!!detail} onClose={() => setDetail(null)} title={detail?.name} wide>
         {detail && (() => {
@@ -126,6 +129,9 @@ export default function Customers() {
                     <span className="font-semibold text-ink">{x.invoiceNo}</span>
                     <span className="text-ink3">{dt(x.ts)}</span>
                     <span className="ml-auto font-mono font-bold text-ink">{money(x.total, s.currency)}</span>
+                    <button className="btn-soft px-2 py-1 text-[11px]" onClick={() => setShareSale(x)} title="WhatsApp / image">
+                      <MessageCircle size={12} /> Send
+                    </button>
                   </div>
                 ))}
               </div>

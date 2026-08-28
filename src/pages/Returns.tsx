@@ -7,6 +7,8 @@ import { Card, Stat, Modal, Field, Input, Select, Empty, SearchBar, Badge, Texta
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/ui';
 import { printSale } from '@/lib/receipt';
+import ShareBillModal from '@/components/pos/ShareBillModal';
+import { MessageCircle } from 'lucide-react';
 import type { Sale } from '@/db/types';
 
 /** Returns & exchange desk — line-level refunds with stock restock and credit-note options. */
@@ -15,6 +17,7 @@ export default function Returns() {
   const s = useSettings();
   const [q, setQ] = useState('');
   const [active, setActive] = useState<Sale | null>(null);
+  const [shareSale, setShareSale] = useState<Sale | null>(null);
 
   const recent = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -57,11 +60,14 @@ export default function Returns() {
               {x.status === 'refunded' && <Badge tone="bad">refunded</Badge>}
               {x.status === 'partial-refund' && <Badge tone="warn">partial</Badge>}
               <span className="font-mono text-sm font-bold text-ink">{money(x.total, s.currency)}</span>
+              <span role="button" tabIndex={0} className="btn-soft px-2 py-1 text-[11px]"
+                onClick={(e) => { e.stopPropagation(); setShareSale(x); }}><MessageCircle size={12} /></span>
             </button>
           ))}
         </Card>
       )}
 
+      <ShareBillModal sale={shareSale} onClose={() => setShareSale(null)} />
       {active && <ReturnModal sale={active} onClose={() => setActive(null)} />}
     </div>
   );

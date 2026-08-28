@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Printer, Share2, Download, MessageCircle, Copy, FileText, ChefHat, Eye, Image as ImageIcon, Type, Loader2 } from 'lucide-react';
+import { Printer, Share2, Download, MessageCircle, Copy, FileText, ChefHat, Eye, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Modal, Select, Field } from '@/components/ui';
 import type { Sale } from '@/db/types';
 import { useSettings, useShop } from '@/store/settings';
-import { renderReceipt, printHTML, saleText, waLink, allTemplates } from '@/lib/receipt';
+import { renderReceipt, printHTML, saleText, allTemplates } from '@/lib/receipt';
 import type { TemplateDef } from '@/lib/templates';
 import { download } from '@/lib/csv';
 import { money } from '@/lib/format';
 import { toast } from '@/store/ui';
 import UpiPay from './UpiPay';
-import { downloadSaleImage, shareSaleImage } from '@/lib/billImage';
+import { downloadSaleImage } from '@/lib/billImage';
+import ShareBillModal from './ShareBillModal';
 
 export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onClose: () => void }) {
   const s = useSettings();
@@ -19,6 +20,7 @@ export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onC
   const [preview, setPreview] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [imgBusy, setImgBusy] = useState<'' | 'wa' | 'dl'>('');
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => { allTemplates().then(setTemplates); }, [sale]);
   useEffect(() => { setTplId(s.defaultTemplate); }, [sale?.id]);
@@ -65,28 +67,20 @@ export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onC
         <button className="btn-soft" onClick={() => doPrint(tplId, s.duplicateLabel)}><Copy size={15} /> Duplicate</button>
         <button className="btn-soft" onClick={() => setShowPreview((v) => !v)}><Eye size={15} /> {showPreview ? 'Hide' : 'Preview'}</button>
         <button className="btn-soft" onClick={async () => download(`${sale.invoiceNo}.html`, await renderReceipt(sale, s, tplId), 'text/html')}><Download size={15} /> Save HTML</button>
-        <button className="btn-soft" onClick={() => window.open(waLink('', text), '_blank')}><Type size={15} /> WA · text</button>
-        <button className="btn-soft" disabled={imgBusy === 'wa'} onClick={async () => {
-          setImgBusy('wa');
-          try {
-            const r = await shareSaleImage(sale, s as any, tplId, '');
-            if (r === 'shared') toast('WhatsApp share sheet khul gaya');
-            else if (r === 'downloaded') toast('Image download ho gayi — WhatsApp me attach kar dijiye', 'info');
-            else toast('Image nahi ban paayi', 'err');
-          } catch { toast('Image nahi ban paayi', 'err'); }
-          setImgBusy('');
-        }}>{imgBusy === 'wa' ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />} WA · image</button>
+        <button className="btn-primary" onClick={() => setShareOpen(true)}><MessageCircle size={15} /> WhatsApp</button>
         <button className="btn-soft" disabled={imgBusy === 'dl'} onClick={async () => {
           setImgBusy('dl');
           try { await downloadSaleImage(sale, s as any, tplId); toast('Bill image saved (PNG)'); }
           catch { toast('Image save nahi hui', 'err'); }
           setImgBusy('');
-        }}>{imgBusy === 'dl' ? <Loader2 size={15} className="animate-spin" /> : <ImageIcon size={15} />} Save image</button>
+        }}>{imgBusy === 'dl' ? <Loader2 size={15} className="animate-spin" /> : <ImageIcon size={15} />} Download image</button>
         <button className="btn-soft" onClick={async () => {
           try { if (navigator.share) await navigator.share({ title: sale.invoiceNo, text }); else { await navigator.clipboard.writeText(text); toast('Receipt copied'); } } catch { /* cancelled */ }
         }}><Share2 size={15} /> Share</button>
         <button className="btn-soft" onClick={() => { navigator.clipboard.writeText(text); toast('Copied'); }}><Copy size={15} /> Copy text</button>
       </div>
+
+      {shareOpen && <ShareBillModal sale={sale} onClose={() => setShareOpen(false)} />}
 
       {showPreview && (
         <div className="mt-3 overflow-hidden rounded-xl border border-line bg-white">
