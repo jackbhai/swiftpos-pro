@@ -199,3 +199,34 @@ export interface Subscription {
   lines: CartLine[]; amount: number; every: 'day' | 'week' | 'month'; nextDue: string;
   active: boolean; lastBilled?: number; note?: string; createdAt: number;
 }
+
+export interface Branch {
+  id: ID; name: string; code: string; address?: string; phone?: string;
+  gstin?: string; active: boolean; isDefault?: boolean; createdAt: number;
+}
+
+export interface Transfer {
+  id: ID; transferNo: string; ts: number; fromBranch: ID; fromName: string;
+  toBranch: ID; toName: string; items: { productId: ID; name: string; qty: number; unit: string; cost: number }[];
+  status: 'draft' | 'sent' | 'received' | 'cancelled'; note?: string; receivedAt?: number; value: number;
+}
+
+export interface ServiceJob {
+  id: ID; jobNo: string; ts: number; customerId?: ID; customerName: string; phone?: string;
+  item: string; brand?: string; serial?: string; issue: string; accessories?: string;
+  status: 'received' | 'diagnosing' | 'awaiting-parts' | 'repairing' | 'ready' | 'delivered' | 'returned';
+  estimate: number; finalAmount?: number; advance: number; technician?: string;
+  promisedAt?: number; deliveredAt?: number; warrantyDays?: number; parts?: { name: string; qty: number; cost: number }[];
+  note?: string;
+}
+
+export interface Appointment {
+  id: ID; ts: number; durationMin: number; customerId?: ID; customerName: string; phone?: string;
+  service: string; staffId?: ID; staffName?: string; price: number;
+  status: 'booked' | 'confirmed' | 'arrived' | 'done' | 'no-show' | 'cancelled'; note?: string; createdAt: number;
+}
+
+export interface PriceList {
+  id: ID; name: string; kind: 'percent' | 'fixed-margin' | 'manual'; value: number;
+  customerTag?: string; items?: { productId: ID; price: number }[]; active: boolean; note?: string;
+}

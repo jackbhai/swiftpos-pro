@@ -26,6 +26,11 @@ const Attendance = lazy(() => import('@/pages/Attendance'));
 const Recipes = lazy(() => import('@/pages/Recipes'));
 const Subscriptions = lazy(() => import('@/pages/Subscriptions'));
 const Insights = lazy(() => import('@/pages/Insights'));
+const Branches = lazy(() => import('@/pages/Branches'));
+const Service = lazy(() => import('@/pages/Service'));
+const Appointments = lazy(() => import('@/pages/Appointments'));
+const TaxCenter = lazy(() => import('@/pages/TaxCenter'));
+const Cleanup = lazy(() => import('@/pages/Cleanup'));
 const Staff = lazy(() => import('@/pages/Staff'));
 const Activity = lazy(() => import('@/pages/Activity'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
@@ -59,6 +64,11 @@ export default function App() {
           <Route path="/recipes" element={<Recipes />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/branches" element={<Branches />} />
+          <Route path="/service" element={<Service />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/tax" element={<TaxCenter />} />
+          <Route path="/cleanup" element={<Cleanup />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/settings" element={<SettingsPage />} />

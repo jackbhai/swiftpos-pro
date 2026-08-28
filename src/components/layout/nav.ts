@@ -3,6 +3,7 @@ import {
   Wallet, BarChart3, Ticket, UserCog, Settings, Boxes, Clock, HelpCircle, Utensils, Tag,
   Undo2, FileText, CalendarCheck, ClipboardList, MessageCircle,
   BookUser, ChefHat, CalendarClock, CookingPot, Repeat, Sparkles,
+  Store, Wrench, CalendarDays, FileSpreadsheet, Stethoscope,
 } from 'lucide-react';
 
 export interface NavItem { path: string; label: string; icon: any; group: string; hint?: string }
@@ -21,6 +22,7 @@ export const NAV: NavItem[] = [
   { path: '/ledger', label: 'Khata', icon: BookUser, group: 'Money', hint: 'Dues, payables & statements' },
   { path: '/subscriptions', label: 'Subscriptions', icon: Repeat, group: 'Money', hint: 'Repeat & recurring orders' },
   { path: '/expenses', label: 'Expenses', icon: Wallet, group: 'Money', hint: 'Costs & cash out' },
+  { path: '/tax', label: 'Tax Centre', icon: FileSpreadsheet, group: 'Money', hint: 'GSTR-1, HSN & filings' },
   { path: '/reports', label: 'Reports', icon: BarChart3, group: 'Money', hint: 'Analytics & GST' },
   { path: '/quotes', label: 'Quotes', icon: FileText, group: 'Money', hint: 'Estimates & proforma' },
   { path: '/dayclose', label: 'Day Close', icon: CalendarCheck, group: 'Money', hint: 'Z-report & cash count' },
@@ -29,10 +31,14 @@ export const NAV: NavItem[] = [
   { path: '/stocktake', label: 'Stock Take', icon: ClipboardList, group: 'Ops', hint: 'Physical count & audit' },
   { path: '/reminders', label: 'Reminders', icon: MessageCircle, group: 'Ops', hint: 'Bulk WhatsApp dues' },
   { path: '/tables', label: 'Tables', icon: Utensils, group: 'Ops', hint: 'Restaurant floor' },
+  { path: '/service', label: 'Service Jobs', icon: Wrench, group: 'Ops', hint: 'Repairs & job cards' },
+  { path: '/appointments', label: 'Appointments', icon: CalendarDays, group: 'Ops', hint: 'Slot bookings' },
+  { path: '/branches', label: 'Branches', icon: Store, group: 'Ops', hint: 'Outlets & stock transfer' },
   { path: '/recipes', label: 'Recipes', icon: CookingPot, group: 'Ops', hint: 'BOM, combos & production' },
   { path: '/attendance', label: 'Attendance', icon: CalendarClock, group: 'Ops', hint: 'Punch in/out & payroll' },
   { path: '/staff', label: 'Staff', icon: UserCog, group: 'Ops', hint: 'Users, shifts & PINs' },
   { path: '/activity', label: 'Activity', icon: Clock, group: 'Ops', hint: 'Audit log' },
+  { path: '/cleanup', label: 'Data Doctor', icon: Stethoscope, group: 'System', hint: 'Find & fix catalogue issues' },
   { path: '/settings', label: 'Settings', icon: Settings, group: 'System', hint: 'Store & preferences' },
   { path: '/help', label: 'Help', icon: HelpCircle, group: 'System', hint: 'Shortcuts & guide' },
 ];

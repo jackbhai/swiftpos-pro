@@ -5,6 +5,7 @@ import { money, moneyShort, num, pct, cx, dayKey } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
 import { Card, SectionTitle, Empty, Badge, Stat } from '@/components/ui';
 import { useSettings } from '@/store/settings';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 const COLORS = ['#22d3ee', '#a78bfa', '#f472b6', '#34d399', '#fbbf24', '#60a5fa', '#fb7185', '#4ade80', '#c084fc', '#facc15'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -12,7 +13,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 /** ABC (Pareto) inventory classification — where your money actually lives. */
 export function ABCReport({ sales, products }: { sales: any[]; products: any[] }) {
   const s = useSettings();
-  const rows = useMemo(() => {
+  const { data: worker, busy } = useAnalytics('abc', sales);
+  const local = useMemo(() => {
     const m = new Map<string, { name: string; qty: number; revenue: number; profit: number }>();
     sales.forEach((x: any) => x.lines.forEach((l: any) => {
       const c = m.get(l.productId) || { name: l.name, qty: 0, revenue: 0, profit: 0 };
@@ -28,10 +30,12 @@ export function ABCReport({ sales, products }: { sales: any[]; products: any[] }
       return { ...r, share, cls: share <= 80 ? 'A' : share <= 95 ? 'B' : 'C' };
     });
   }, [sales]);
+  const rows: any[] = worker || local;
 
   const counts = { A: rows.filter((r) => r.cls === 'A'), B: rows.filter((r) => r.cls === 'B'), C: rows.filter((r) => r.cls === 'C') };
   const notSold = products.length - rows.length;
 
+  if (busy && !rows.length) return <div className="grid h-40 place-items-center text-ink3">Crunching numbers in a background thread…</div>;
   if (!rows.length) return <Empty title="No sales in this period" sub="ABC analysis needs sales data." icon={<Layers size={22} />} />;
 
   return (
@@ -147,7 +151,8 @@ export function MixReport({ sales }: { sales: any[] }) {
 /** Market-basket affinity — "customers who buy X also buy Y". */
 export function BasketReport({ sales }: { sales: any[] }) {
   const s = useSettings();
-  const pairs = useMemo(() => {
+  const { data: workerPairs } = useAnalytics('basket', sales);
+  const localPairs = useMemo(() => {
     const m = new Map<string, { a: string; b: string; n: number }>();
     sales.forEach((x: any) => {
       const names = Array.from(new Set<string>(x.lines.map((l: any) => String(l.name)))).slice(0, 12);
@@ -159,6 +164,7 @@ export function BasketReport({ sales }: { sales: any[] }) {
     });
     return [...m.values()].filter((p) => p.n > 1).sort((a, b) => b.n - a.n).slice(0, 40);
   }, [sales]);
+  const pairs: { a: string; b: string; n: number }[] = workerPairs || localPairs;
 
   const avgBasket = sales.length ? sales.reduce((t: number, x: any) => t + x.lines.length, 0) / sales.length : 0;
   const avgTicket = sales.length ? sales.reduce((t: number, x: any) => t + x.total, 0) / sales.length : 0;

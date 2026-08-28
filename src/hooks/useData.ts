@@ -21,3 +21,8 @@ export const usePayroll = () => useLiveQuery(() => db.payroll.toArray(), [], [] 
 export const useRecipes = () => useLiveQuery(() => db.recipes.toArray(), [], [] as any[]);
 export const useSubscriptions = () => useLiveQuery(() => db.subscriptions.toArray(), [], [] as any[]);
 export const useQuotes = () => useLiveQuery(() => db.quotes.orderBy('ts').reverse().toArray(), [], [] as any[]);
+export const useBranches = () => useLiveQuery(() => db.branches.toArray(), [], [] as any[]);
+export const useTransfers = () => useLiveQuery(() => db.transfers.orderBy('ts').reverse().limit(200).toArray(), [], [] as any[]);
+export const useServiceJobs = () => useLiveQuery(() => db.serviceJobs.orderBy('ts').reverse().limit(300).toArray(), [], [] as any[]);
+export const useAppointments = () => useLiveQuery(() => db.appointments.orderBy('ts').toArray(), [], [] as any[]);
+export const usePriceLists = () => useLiveQuery(() => db.priceLists.toArray(), [], [] as any[]);

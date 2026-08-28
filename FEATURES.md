@@ -416,3 +416,96 @@
 343. Service-worker cache bumped so every device picks up the new build automatically
 344. Dashboard **action strip**: live orders, udhaar, repeat orders due, out-of-stock — each one tap away
 345. 28 screens total, all route-split and lazily loaded
+
+---
+
+# v10 — multi-outlet, service business & data-quality release (346–420)
+
+## Branches & stock transfer (new module)
+346. Create unlimited **branches / outlets** with code, address, phone and GSTIN
+347. Mark a main branch; activate or deactivate outlets
+348. **Stock transfer** between branches with item-wise quantities
+349. Dispatch instantly deducts stock from the source branch
+350. **Receive** at destination adds stock with a matching stock-log entry
+351. Printable **transfer challan** with signature lines
+352. Transfer status pipeline: draft → sent → received → cancelled
+353. "Value in transit" KPI so nothing gets lost between outlets
+354. Every transfer movement is written to the audit log
+
+## Service & repair jobs (new module)
+355. **Job cards** for mobile, electronics, appliance, tailoring, any repair work
+356. 7-stage pipeline: received → diagnosing → awaiting-parts → repairing → ready → delivered → returned
+357. Item, brand, serial/IMEI, reported issue and accessories received
+358. Estimate, advance, final amount and live **balance due**
+359. Technician assignment from your staff list
+360. **Parts used** list with quantity and cost per part
+361. Promised date with automatic **overdue** flagging
+362. Auto WhatsApp "your item is ready" message when a job hits *ready*
+363. Status-update WhatsApp message at any stage
+364. Printable **job card** with terms and signature lines
+365. Service warranty days recorded per job
+366. One-tap **bill the job** — pushes the balance into the POS cart
+367. Pipeline-value KPI and searchable job history with CSV export
+
+## Appointments & bookings (new module)
+368. **Day view** with hourly slots from 8 am to 10 pm
+369. Free slots are clickable — book straight into that hour
+370. Booking states: booked, confirmed, arrived, done, no-show, cancelled
+371. Staff assignment, duration and price per booking
+372. WhatsApp appointment confirmation in one tap
+373. **No-show rate** and expected-revenue KPIs
+374. Upcoming list across all future days
+375. One-tap billing that pushes the service into the cart
+
+## Tax centre (new module)
+376. **GSTR-1 style** monthly summary computed from real invoices
+377. **Rate-wise outward supplies** with CGST/SGST split
+378. **B2B and B2C** invoice registers with CSV export
+379. **HSN-wise summary** (Table 12 style) with quantity, taxable value and tax
+380. **GSTR-1 JSON export** ready to hand to your accountant
+381. Printable GST summary sheet
+382. Missing-HSN warning with count
+383. Handles both tax-inclusive and tax-exclusive pricing modes
+384. Filing checklist showing your GSTIN, tax mode and state code
+
+## Data doctor / catalogue cleanup (new module)
+385. **12 automatic data-quality checks** across the whole catalogue
+386. Duplicate names and duplicate barcodes detection
+387. Selling-below-cost, zero-price and negative-stock detection
+388. Missing cost, missing HSN, missing barcode and missing category checks
+389. Suspicious margin (>90%) and over-long product names
+390. **Data health score** out of 100
+391. **One-click auto-fix** per check: 20% markup, cost from price, zero out negatives, generate barcodes, set category, trim names
+392. **Smart duplicate merge** — keeps the best row and sums the stock
+393. Bulk "set GST on everything missing it"
+394. Delete all flagged rows in one action
+395. **Every fix is undoable** from the toast
+396. Virtualised results list handles tens of thousands of flagged rows
+397. Full issue export to CSV for offline cleanup
+
+## Performance & platform (deep optimisation round 2)
+398. **Web Worker analytics engine** — ABC classification, basket affinity and velocity run off the main thread
+399. Payload slimming before transfer (only the six fields the worker needs)
+400. Automatic fallback to synchronous computation when Workers are unavailable
+401. Result de-duplication by data stamp — the worker never recomputes the same input twice
+402. 15-second worker timeout with graceful degradation
+403. **Sales history virtualised** — 10,000+ invoices scroll without lag
+404. **Audit log virtualised**
+405. Reports now show a "crunching in a background thread" state instead of freezing
+406. Dexie schema v4 with five new stores, migrated automatically
+407. Backups extended to branches, transfers, service jobs, appointments and price lists
+408. Service-worker cache bumped to v10 so every device auto-updates
+409. 33 screens, all route-split, lazily loaded and idle-prefetched
+
+## Cross-module glue
+410. Service jobs, appointments and subscriptions all bill through the same POS cart
+411. Branch transfers, production runs and stock takes all write to one unified stock log
+412. Khata, returns and reminders share the same customer credit ledger
+413. Insights engine reads every new module's data
+414. Command palette (⌘K) indexes all 33 screens
+415. Undo support now covers products, bulk edits, quotes, recipes, subscriptions, orders, branches, service jobs, appointments and cleanup fixes
+416. Every new module ships with CSV export
+417. Every new module ships with a printable document (challan, job card, statement, Z-report, GST summary)
+418. Every new module is fully offline-capable
+419. Every new module respects the shop-type terminology (Product → Medicine / Dish / Service)
+420. Every new module is mobile-first and works on the same AMOLED theme

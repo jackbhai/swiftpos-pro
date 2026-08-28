@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Download, Printer, RotateCcw, Search, Eye, MessageCircle, Trash2 } from 'lucide-react';
 import { useSales } from '@/hooks/useData';
+import { VirtualList } from '@/components/ui/Virtual';
 import { db } from '@/db/db';
 import { money, moneyShort, dt, rangeFor, cx, num } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
@@ -68,28 +69,33 @@ export default function SalesPage() {
       </Card>
 
       {list.length === 0 ? <Empty title={`No ${terms.sales.toLowerCase()} in this range`} /> : (
-        <div className="space-y-2">
-          {list.slice(0, limit).map((x: Sale) => (
-            <Card key={x.id} className="flex flex-wrap items-center gap-3 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 text-sm font-bold text-ink">
-                  {x.invoiceNo}
-                  <Badge tone={x.status === 'completed' ? 'ok' : 'bad'}>{x.status}</Badge>
-                  <Badge tone="muted">{x.payMode}</Badge>
-                </p>
-                <p className="truncate text-[11px] text-ink3">{dt(x.ts)} · {x.customerName ?? 'Walk-in'} · {x.lines.length} items{x.staffName ? ' · ' + x.staffName : ''}</p>
+        <Card pad={false}>
+          <VirtualList
+            items={list}
+            rowHeight={64}
+            columns={1}
+            height="calc(100dvh - 330px)"
+            render={(x: Sale) => (
+              <div className="flex h-full flex-wrap items-center gap-3 border-b border-line px-3">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-sm font-bold text-ink">
+                    {x.invoiceNo}
+                    <Badge tone={x.status === 'completed' ? 'ok' : 'bad'}>{x.status}</Badge>
+                    <Badge tone="muted">{x.payMode}</Badge>
+                  </p>
+                  <p className="truncate text-[11px] text-ink3">{dt(x.ts)} · {x.customerName ?? 'Walk-in'} · {x.lines.length} items{x.staffName ? ' · ' + x.staffName : ''}</p>
+                </div>
+                <span className="font-mono text-base font-extrabold text-ink">{money(x.total, s.currency)}</span>
+                <div className="flex gap-1">
+                  <button className="btn-ghost px-2 py-1.5" onClick={() => setView(x)}><Eye size={14} /></button>
+                  <button className="btn-ghost px-2 py-1.5" onClick={() => printHTML(receiptHTML(x, s, '80mm'))}><Printer size={14} /></button>
+                  <button className="btn-ghost px-2 py-1.5" onClick={() => window.open(waLink('', saleText(x, s)), '_blank')}><MessageCircle size={14} /></button>
+                  <button className="btn-ghost px-2 py-1.5" onClick={() => setRefund(x)} disabled={x.status !== 'completed'}><RotateCcw size={14} /></button>
+                </div>
               </div>
-              <span className="font-mono text-base font-extrabold text-ink">{money(x.total, s.currency)}</span>
-              <div className="flex gap-1">
-                <button className="btn-ghost px-2 py-1.5" onClick={() => setView(x)}><Eye size={14} /></button>
-                <button className="btn-ghost px-2 py-1.5" onClick={() => printHTML(receiptHTML(x, s, '80mm'))}><Printer size={14} /></button>
-                <button className="btn-ghost px-2 py-1.5" onClick={() => window.open(waLink('', saleText(x, s)), '_blank')}><MessageCircle size={14} /></button>
-                <button className="btn-ghost px-2 py-1.5" onClick={() => setRefund(x)} disabled={x.status !== 'completed'}><RotateCcw size={14} /></button>
-              </div>
-            </Card>
-          ))}
-          {list.length > limit && <button className="btn-ghost w-full" onClick={() => setLimit((l) => l + 60)}>Load more</button>}
-        </div>
+            )}
+          />
+        </Card>
       )}
 
       <Modal open={!!view} onClose={() => setView(null)} title={view?.invoiceNo} wide
