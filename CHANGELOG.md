@@ -2,6 +2,31 @@
 
 All notable changes to SwiftPOS Pro. Dates are IST.
 
+## [14.0.0] — 2026-08-29 · Ultra UI Polish & PWA Hardening
+### Added
+- **Ultra-Grade AMOLED & Cyber UI Design**: Deep black `#000000` surface, glassmorphism card elevation, glowing active borders, glowing status badges, and silky smooth transitions across mobile, tablet, and desktop.
+- **PWA Supercharge & Real Icon Assets**:
+  - Full suite of crisp PNG icons generated (72px, 96px, 128px, 144px, 152px, 192px, 384px, 512px, maskable 512px, apple-touch-icon 180px, favicon 48px).
+  - Standalone PWA detection and custom **PWA Install Modal** with step-by-step Safari iOS instructions and 1-tap Android/Desktop native install.
+  - Safe-area-inset padding for iPhone Dynamic Island, home indicators, and Android gesture navigation.
+  - Service Worker upgraded to `swiftpos-v14-0` with asset caching, background refresh, and immediate update takeover.
+- **Header Quick Business System Switcher**:
+  - Direct 1-tap switcher drawer in the top navigation to switch between all 10 business editions (RMS, Pharmacy, Kirana, Retail, Electronics, Salon, Hardware, Bakery, Cafe, Garage) without leaving the POS.
+- **Thermal Hardware Studio & Test Bench**:
+  - Live interactive simulated 58mm / 80mm thermal receipt roll preview with ESC/POS styling.
+  - 1-tap test print triggers for 58mm thermal, 80mm standard thermal, and A4 tax invoice.
+  - Cash drawer kick pulse trigger test (`\x1B\x70\x00\x19\xFA`) and hardware setup guide.
+- **Synthetic Web Audio & Haptic Feedback Engine**:
+  - Realistic dual-tone POS barcode scanner beep (`1480Hz + 1860Hz`).
+  - Joyful harmonic payment success chime (C5-E5-G5-C6 ascending arpeggio).
+  - Micro tactile click and alert tones.
+  - Multi-pattern vibration presets (`light`, `medium`, `heavy`, `success`, `warning`).
+- **POS & Split Payment Experience**:
+  - Real-time discount calculation (% and ₹), quick note drawer, extra charge modifiers.
+  - Multi-tender split payment visualizer (Cash + UPI + Card + Wallet + Credit).
+  - Instant gift card lookup and redemption.
+- **Expanded Test Suite**: Vitest suite expanded to 43 unit tests covering calculations, doctor, systems, format, PWA detection, and sound engine.
+
 ## [13.0.0] — 2026-08-28 · Production release
 ### Added
 - **First-run setup wizard** (`/welcome`): shop details → business system → data import → UPI → security, in five steps.

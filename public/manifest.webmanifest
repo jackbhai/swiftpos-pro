@@ -1,8 +1,8 @@
 {
-  "name": "SwiftPOS Pro \u2014 Billing, Inventory & CRM",
-  "short_name": "SwiftPOS",
-  "id": "swiftpos-pro",
-  "description": "Offline-first point of sale, inventory, khata, GST billing and analytics for 10 business types.",
+  "name": "SwiftPOS Pro — Billing, Inventory & Multi-Industry POS",
+  "short_name": "SwiftPOS Pro",
+  "id": "swiftpos-pro-app",
+  "description": "Ultra-fast offline-first point of sale, inventory, khata, GST billing, thermal printing and multi-device cloud sync for 10 business systems.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -25,39 +25,90 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='black'/%3E%3Ctext x='256' y='330' font-size='300' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
+      "src": "./icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='black'/%3E%3Ctext x='256' y='330' font-size='300' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E",
+      "src": "./icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "New bill",
+      "name": "Quick Billing",
       "short_name": "Billing",
       "url": "./#/pos",
-      "description": "Open the POS terminal"
+      "description": "Open the POS billing terminal"
     },
     {
-      "name": "Inventory",
+      "name": "Inventory & Stock",
       "short_name": "Stock",
-      "url": "./#/inventory"
+      "url": "./#/inventory",
+      "description": "Check and manage stock levels"
     },
     {
-      "name": "Day close",
-      "short_name": "Day close",
-      "url": "./#/dayclose"
+      "name": "Day Close Register",
+      "short_name": "Day Close",
+      "url": "./#/dayclose",
+      "description": "Close cash register and view summary"
     },
     {
-      "name": "Reports",
+      "name": "Reports & Analytics",
       "short_name": "Reports",
-      "url": "./#/reports"
+      "url": "./#/reports",
+      "description": "View sales insights and tax reports"
+    },
+    {
+      "name": "Switch Business System",
+      "short_name": "Systems",
+      "url": "./#/systems",
+      "description": "Change active business edition"
     }
   ]
 }

@@ -89,14 +89,17 @@ export const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void
   </button>
 );
 
-export const SearchBar: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string; autoFocus?: boolean; right?: React.ReactNode }> = ({ value, onChange, placeholder = 'Search…', autoFocus, right }) => (
-  <div className="relative flex-1">
-    <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink3" />
-    <input autoFocus={autoFocus} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="input pl-9 pr-9" />
-    {value && <button onClick={() => onChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-ink3 hover:text-ink"><X size={14} /></button>}
-    {right}
-  </div>
+export const SearchBar = React.forwardRef<HTMLInputElement, { value: string; onChange: (v: string) => void; placeholder?: string; autoFocus?: boolean; right?: React.ReactNode }>(
+  ({ value, onChange, placeholder = 'Search…', autoFocus, right }, ref) => (
+    <div className="relative flex-1">
+      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink3" />
+      <input ref={ref} autoFocus={autoFocus} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="input pl-9 pr-9" />
+      {value && <button onClick={() => onChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-ink3 hover:text-ink"><X size={14} /></button>}
+      {right}
+    </div>
+  )
 );
+SearchBar.displayName = 'SearchBar';
 
 export const Empty: React.FC<{ title: string; sub?: string; action?: React.ReactNode; icon?: React.ReactNode }> = ({ title, sub, action, icon }) => (
   <div className="flex flex-col items-center justify-center gap-2 py-14 text-center">

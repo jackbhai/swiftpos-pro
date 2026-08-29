@@ -2,14 +2,28 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="SwiftPOS Pro — offline-first AMOLED point of sale, inventory, CRM & analytics suite." />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='%2300e5ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E" />
+    <meta name="description" content="SwiftPOS Pro — Ultra-fast offline-first AMOLED point of sale, inventory, khata, GST billing and multi-device cloud sync for 10 business types." />
+    
+    <!-- PWA & Mobile Web App Meta -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SwiftPOS Pro" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="48x48" href="./favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <title>SwiftPOS Pro</title>
+
+    <title>SwiftPOS Pro — Multi-Industry POS</title>
   </head>
-  <body>
+  <body class="bg-black text-ink select-none antialiased overscroll-none">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

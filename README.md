@@ -1,8 +1,9 @@
-# ⚡ SwiftPOS Pro v13.0 — production
+# ⚡ SwiftPOS Pro v14.0 — Ultra UI & PWA Edition
 
-**An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, stationery, or your own custom business.
+**An offline-first, AMOLED-black Point of Sale suite that adapts to *any* kind of shop** — kirana, medical store, restaurant, cafe, bakery, electronics, fashion, salon, hardware, garage, or your own custom business.
 
 > Live app → **https://jackbhai.github.io/swiftpos-pro/**
+> Landing page → **https://jackbhai.github.io/swiftpos-pro/landing.html**
 
 Everything runs in the browser. No server, no subscription, no internet needed after first load — your data lives in IndexedDB on your own device.
 
@@ -12,47 +13,28 @@ Everything runs in the browser. No server, no subscription, no internet needed a
 
 | | |
 |---|---|
-| 🏪 **12 shop profiles** | Switching profile re-labels the UI (Product → Medicine / Dish / Service), toggles modules, and sets tax, units, categories and layout |
-| 📥 **Universal JSON/CSV import** | Auto-detects your schema, maps 40+ field aliases, chunked import with progress — tested with a **27,555-product** catalogue |
-| 🧾 **Complete billing** | Barcode scan, holds, split payments, coupons, loyalty, credit, 58mm/80mm/A4 receipts, WhatsApp share |
-| 📦 **Inventory** | Batch & expiry, margins, stock logs, adjustments, dead-stock report, valuation |
-| 👥 **CRM** | Tiers, loyalty points, credit ledger, segments, purchase history |
-| 🚚 **Purchasing** | Vendors, purchase orders, one-tap receive with auto stock-in |
-| 📊 **Analytics** | Dashboard KPIs, hourly heatmap, GST (GSTR-1 style), P&L, staff performance |
-| 🌑 **AMOLED UI** | True-black theme, 6 accents, 3 densities, light mode, fully responsive phone → desktop |
-| 🧾 **20 bill templates** | Thermal 58/80mm, A4 GST invoice, KOT, token slip, gift receipt, challan, Z-report… plus **upload your own HTML template** |
-| 📲 **Multi-UPI + QR** | Save unlimited UPI IDs, dynamic scan-to-pay QR at checkout and printed on bills, GPay/PhonePe/Paytm deep links |
-| ⚙️ **16 settings tabs** | Store, billing, charges, payments, templates, printing, POS, inventory, loyalty, messaging, security, JSON, appearance, backup |
-| 🏷️ **Label printing** | Code128 barcode + price shelf tags, 3 sizes, 1–6 columns |
-| 🔒 **App lock** | PIN keypad with idle auto-lock, cashier discount caps, hide-cost mode |
-| 🚀 **v8 performance engine** | Virtualised lists, shared indexed catalogue cache, ranked fuzzy search, debounced input — 27k products scroll at 60 fps |
-| 📴 **True PWA** | Service worker, install prompt, in-app update button, works fully offline |
-| ↩️ **Returns desk** | Line-level refunds, restock, credit notes, reason codes |
-| 🧮 **Day close (Z-report)** | Denomination cash count, variance, payment mix, printable Z-report |
-| 📋 **Stock take** | Count sheet, live shrink value, bulk-post adjustments with audit trail |
-| 📝 **Quotes / estimates** | Build, print, WhatsApp, convert to bill in one tap |
-| 💬 **Bulk reminders** | Dues, win-back, birthday and VIP WhatsApp campaigns |
-| 🧠 **Reports+** | ABC/Pareto, demand mix, basket affinity, forecast & reorder plan |
-| 📒 **Khata / ledger** | Customer dues, vendor payables, payment in/out, printable statements |
-| 🍳 **Orders + KDS** | Live delivery board, kitchen display, KOT print, prep timers |
-| 🕒 **Attendance & payroll** | Punch in/out, hours, salary pro-rating, commission, payslips |
-| 🥘 **Recipes & production** | BOM costing, can-make calculation, production runs that move stock |
-| 🔁 **Subscriptions** | Daily/weekly/monthly repeat orders with due queue and MRR |
-| ✨ **Insights engine** | Health score + 18 ranked, actionable business insights |
-| 🏬 **Branches & transfers** | Multi-outlet stock movement with printable challans |
-| 🔧 **Service jobs** | Repair job cards, parts, warranty, ready-for-pickup WhatsApp |
-| 📅 **Appointments** | Hourly slot board for salon/clinic/tailor style businesses |
-| 🧾 **Tax centre** | GSTR-1 summary, B2B/B2C registers, HSN table, JSON export |
-| 🩺 **Data doctor** | 12 catalogue health checks with one-click, undoable auto-fixes |
-| 🧵 **Worker analytics** | ABC, basket affinity & velocity computed off the main thread |
-| 📤 **Bill sharing** | WhatsApp as **text or image**, plus download the bill as a PNG |
+| 🏪 **10 Business Systems** | Switching system (RMS, Pharmacy, Kirana, Retail, Electronics, Salon, Hardware, Bakery, Cafe, Garage) re-wires screens, billing capture fields, wording, and defaults |
+| 📴 **PWA Supercharged** | Multi-size PNG icons (72px to 512px + maskable + apple-touch-icon), offline-first service worker, in-app install modal with iOS step-by-step & Android 1-click install |
+| 🌑 **Ultra AMOLED UI** | Pure `#000000` glassmorphic theme, neon glow borders, animated pills, quick system switcher drawer, and silky smooth responsive sheet interactions |
+| 🔊 **Audio & Haptic Feedback** | Synthetic Web Audio engine (dual-tone barcode beep, cash register arpeggio chime, tactile clicks) + 5 vibration presets, 100% offline with zero assets |
+| 🖨️ **Hardware & Thermal Studio** | Live simulated 58mm/80mm thermal receipt preview, 1-tap test prints, cash drawer kick pulse test (`\x1B\x70\x00\x19\xFA`), and scanner guide |
+| 📥 **Universal JSON/CSV Import** | Auto-detects schema, maps 40+ field aliases, chunked import with progress — tested with **27,555-product** catalogue |
+| 🧾 **Complete Billing & Split Pay** | Barcode scan, holds, multi-mode split payments (Cash + UPI + Card + Wallet + Credit), coupons, loyalty, 20+ templates, WhatsApp share |
+| 📦 **Inventory & Stock Logs** | Batch & expiry, margin tracking, stock movement audit trail, low-stock & expiry severity badges, fast adjustment drawer |
+| ☁️ **Multi-Device Cloud Sync** | Firebase / Supabase / REST connection with live progress meter, device registry, and auto-repair doctor |
 
-Full list: [FEATURES.md](./FEATURES.md) — **854 features**.
+Full list: [FEATURES.md](./FEATURES.md) — **883 features**.
 
 ### Production status
 [![CI](https://github.com/jackbhai/swiftpos-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/jackbhai/swiftpos-pro/actions/workflows/ci.yml)
 
-Every push runs **typecheck → 38 unit tests → production build** before GitHub Pages deploys.
+Every push runs **typecheck → 43 unit tests → production build** before GitHub Pages deploys.
+
+```bash
+npm ci
+npm run verify   # typecheck + tests + production build
+npm run dev      # local development
+```
 
 | | |
 |---|---|

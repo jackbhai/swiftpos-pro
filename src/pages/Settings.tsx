@@ -183,26 +183,32 @@ function ChargesTab() {
   );
 }
 
+import PrinterTestBench from '@/components/hardware/PrinterTestBench';
+
 /* ── PRINTING ──────────────────────────────────────────── */
 function PrintingTab() {
   const s = useSettings();
   return (
-    <Card className="space-y-3">
-      <SectionTitle title="Printer & paper" sub="Works with any thermal or laser printer your device can reach." right={<Printer size={16} className="text-ink3" />} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field label="Paper size"><Select value={s.printPaper} onChange={(e) => s.set({ printPaper: e.target.value as any })}>{['58mm', '80mm', 'A4'].map((p) => <option key={p}>{p}</option>)}</Select></Field>
-        <Field label="Copies per bill"><Select value={s.printCopies} onChange={(e) => s.set({ printCopies: +e.target.value })}>{[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}</Select></Field>
-        <Field label="Margin (mm)"><Input inputMode="decimal" value={s.printMargin} onChange={(e) => s.set({ printMargin: +e.target.value || 0 })} /></Field>
-        <Field label="Font scale"><Input inputMode="decimal" value={s.printFontScale} onChange={(e) => s.set({ printFontScale: +e.target.value || 1 })} /></Field>
-        <Field label="Density"><Select value={s.printDensity} onChange={(e) => s.set({ printDensity: e.target.value as any })}>{['compact', 'normal', 'airy'].map((d) => <option key={d}>{d}</option>)}</Select></Field>
-      </div>
-      <Toggle checked={s.autoPrint} onChange={(v) => s.set({ autoPrint: v })} label="Auto-print receipt after payment" />
-      <Toggle checked={s.autoPrintKot} onChange={(v) => s.set({ autoPrintKot: v })} label="Auto-print kitchen KOT" hint="Restaurants: fires when the order is saved" />
-      <Toggle checked={s.printLogo} onChange={(v) => s.set({ printLogo: v })} label="Print logo on invoices" />
-      <Toggle checked={s.printBarcodeOnBill} onChange={(v) => s.set({ printBarcodeOnBill: v })} label="Print invoice barcode" hint="Scan the bill to pull it up instantly" />
-      <Toggle checked={s.printQrOnBill} onChange={(v) => s.set({ printQrOnBill: v })} label="Print UPI QR on bill" />
-      <Toggle checked={s.openDrawer} onChange={(v) => s.set({ openDrawer: v })} label="Send cash-drawer kick signal" hint="Requires a drawer wired to the printer" />
-    </Card>
+    <div className="space-y-4">
+      <Card className="space-y-3">
+        <SectionTitle title="Printer & paper" sub="Works with any thermal or laser printer your device can reach." right={<Printer size={16} className="text-ink3" />} />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Paper size"><Select value={s.printPaper} onChange={(e) => s.set({ printPaper: e.target.value as any })}>{['58mm', '80mm', 'A4'].map((p) => <option key={p}>{p}</option>)}</Select></Field>
+          <Field label="Copies per bill"><Select value={s.printCopies} onChange={(e) => s.set({ printCopies: +e.target.value })}>{[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}</Select></Field>
+          <Field label="Margin (mm)"><Input inputMode="decimal" value={s.printMargin} onChange={(e) => s.set({ printMargin: +e.target.value || 0 })} /></Field>
+          <Field label="Font scale"><Input inputMode="decimal" value={s.printFontScale} onChange={(e) => s.set({ printFontScale: +e.target.value || 1 })} /></Field>
+          <Field label="Density"><Select value={s.printDensity} onChange={(e) => s.set({ printDensity: e.target.value as any })}>{['compact', 'normal', 'airy'].map((d) => <option key={d}>{d}</option>)}</Select></Field>
+        </div>
+        <Toggle checked={s.autoPrint} onChange={(v) => s.set({ autoPrint: v })} label="Auto-print receipt after payment" />
+        <Toggle checked={s.autoPrintKot} onChange={(v) => s.set({ autoPrintKot: v })} label="Auto-print kitchen KOT" hint="Restaurants: fires when the order is saved" />
+        <Toggle checked={s.printLogo} onChange={(v) => s.set({ printLogo: v })} label="Print logo on invoices" />
+        <Toggle checked={s.printBarcodeOnBill} onChange={(v) => s.set({ printBarcodeOnBill: v })} label="Print invoice barcode" hint="Scan the bill to pull it up instantly" />
+        <Toggle checked={s.printQrOnBill} onChange={(v) => s.set({ printQrOnBill: v })} label="Print UPI QR on bill" />
+        <Toggle checked={s.openDrawer} onChange={(v) => s.set({ openDrawer: v })} label="Send cash-drawer kick signal" hint="Requires a drawer wired to the printer" />
+      </Card>
+
+      <PrinterTestBench />
+    </div>
   );
 }
 
