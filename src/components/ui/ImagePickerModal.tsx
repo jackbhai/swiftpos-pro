@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera, Upload, Link as LinkIcon, Sparkles, Trash2, Check,
   RefreshCw, Search, Wand2, CheckCircle2, SwitchCamera, Sliders,
-  Layers, ExternalLink, Undo2, SunMedium, ShieldCheck, Zap,
+  Layers, ExternalLink, Undo2, SunMedium, ShieldCheck, Zap, Bot,
 } from 'lucide-react';
 import { Modal, Field, Input, Tabs, Badge } from '@/components/ui';
 import ProductImage, { isImageUrl } from './ProductImage';
@@ -99,10 +99,10 @@ export default function ImagePickerModal({
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraErr, setCameraErr] = useState('');
 
-  // AI Studio Background Clean State & Options
+  // AI Neural Background Removal State
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiProgressText, setAiProgressText] = useState('');
   const [studioMode, setStudioMode] = useState<'white' | 'transparent' | 'amoled' | 'shadow'>('white');
-  const [tolerance, setTolerance] = useState<number>(45);
-  const [processingBg, setProcessingBg] = useState(false);
 
   // Online HD Image Finder State
   const [searchQuery, setSearchQuery] = useState(productName || '');
@@ -200,7 +200,7 @@ export default function ImagePickerModal({
         setOriginalRawImg(dataUrl);
         beep();
         buzz('light');
-        toast('Photo captured! Tap "✨ Clean Studio BG" to isolate product.');
+        toast('Photo captured! Tap "✨ AI Clean BG" to remove background.');
       }
     } catch {
       toast('Failed to capture frame', 'err');
@@ -252,16 +252,104 @@ export default function ImagePickerModal({
     reader.readAsDataURL(file);
   };
 
-  // AI STUDIO BACKGROUND CLEAN & CUTOUT ENGINE (100% Free, Unlimited, In-Browser Offline AI)
-  const applyStudioClean = (mode = studioMode, tol = tolerance) => {
+  // Convert transparent PNG cutout into desired studio background style
+  const compositeStudioBackground = (transparentImg: HTMLImageElement, mode: typeof studioMode): string => {
+    const canvas = document.createElement('canvas');
+    canvas.width = transparentImg.width;
+    canvas.height = transparentImg.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return transparentImg.src;
+
+    if (mode === 'white') {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(transparentImg, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    } else if (mode === 'amoled') {
+      ctx.fillStyle = '#0a0a0c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(transparentImg, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    } else if (mode === 'shadow') {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Soft ambient contact shadow
+      const grad = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height * 0.92,
+        canvas.width * 0.08,
+        canvas.width / 2,
+        canvas.height * 0.92,
+        canvas.width * 0.45,
+      );
+      grad.addColorStop(0, 'rgba(0,0,0,0.24)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
+      ctx.drawImage(transparentImg, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    } else {
+      // Pure transparent PNG
+      ctx.drawImage(transparentImg, 0, 0);
+      return canvas.toDataURL('image/png');
+    }
+  };
+
+  // STATE-OF-THE-ART AI NEURAL BACKGROUND REMOVAL (100% Free, Unlimited, Real Neural Network)
+  const runAiNeuralBackgroundRemoval = async (targetMode = studioMode) => {
     const src = originalRawImg || selectedImg;
-    if (!src || !src.startsWith('data:image')) {
-      return toast('Take or upload a photo first to clean background', 'err');
+    if (!src) {
+      return toast('Please capture or upload a product photo first', 'err');
     }
 
-    setProcessingBg(true);
+    setAiLoading(true);
+    setAiProgressText('Loading Neural AI Engine (WASM/ONNX)…');
     buzz('medium');
 
+    try {
+      // 1. Dynamic import of @imgly/background-removal named export
+      const { removeBackground } = await import('@imgly/background-removal');
+      setAiProgressText('AI analyzing product & isolating contours…');
+
+      // 2. Perform deep learning segmentation inference
+      const blob = await removeBackground(src, {
+        model: 'isnet_fp16', // Fast quantized neural model for mobile & desktop
+        output: { format: 'image/png', quality: 0.95 },
+        progress: (key: string, current: number, total: number) => {
+          if (total > 0) {
+            const pct = Math.round((current / total) * 100);
+            setAiProgressText(`AI Neural Processing… ${pct}%`);
+          }
+        },
+      });
+
+      // 3. Load the transparent cutout
+      const transparentDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const cutImg = new Image();
+      cutImg.onload = () => {
+        const finalUrl = compositeStudioBackground(cutImg, targetMode);
+        setSelectedImg(finalUrl);
+        setAiLoading(false);
+        successSound();
+        buzz('success');
+        toast(`✨ AI Neural Studio Cleaned (${targetMode} mode)!`);
+      };
+      cutImg.src = transparentDataUrl;
+    } catch (err: any) {
+      console.warn('Fallback to High-Speed Adaptive Matting', err);
+      // Robust Fallback: In-browser adaptive matting
+      setAiProgressText('Applying Adaptive Studio Matting…');
+      fallbackAdaptiveMatting(src, targetMode);
+    }
+  };
+
+  // Fallback high-speed adaptive matting
+  const fallbackAdaptiveMatting = (src: string, mode: typeof studioMode) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -269,7 +357,7 @@ export default function ImagePickerModal({
       canvas.height = img.height;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) {
-        setProcessingBg(false);
+        setAiLoading(false);
         return;
       }
 
@@ -277,7 +365,7 @@ export default function ImagePickerModal({
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imgData.data;
 
-      // Sample 8 boundary regions (corners & outer borders)
+      // Sample 8 boundary regions
       const samples = [
         [0, 0],
         [canvas.width - 1, 0],
@@ -285,8 +373,6 @@ export default function ImagePickerModal({
         [canvas.width - 1, canvas.height - 1],
         [Math.floor(canvas.width / 2), 0],
         [Math.floor(canvas.width / 2), canvas.height - 1],
-        [0, Math.floor(canvas.height / 2)],
-        [canvas.width - 1, Math.floor(canvas.height / 2)],
       ];
 
       let bgR = 0, bgG = 0, bgB = 0;
@@ -300,69 +386,41 @@ export default function ImagePickerModal({
       bgG /= samples.length;
       bgB /= samples.length;
 
-      // Process pixel segmentation
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
 
-        // Euclidean color distance from background
         const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-        // Check if pixel belongs to background
-        const isBg = dist < tol || (lum > 220 && dist < tol * 1.5) || (lum < 35 && dist < tol);
-
-        if (isBg) {
+        if (dist < 50 || (lum > 215 && dist < 80)) {
           if (mode === 'transparent') {
-            data[i + 3] = 0; // Alpha 0
+            data[i + 3] = 0;
           } else if (mode === 'amoled') {
-            data[i] = 12;
-            data[i + 1] = 12;
-            data[i + 2] = 14;
+            data[i] = 10;
+            data[i + 1] = 10;
+            data[i + 2] = 12;
             data[i + 3] = 255;
           } else {
-            // Pure White Studio #FFFFFF
             data[i] = 255;
             data[i + 1] = 255;
             data[i + 2] = 255;
             data[i + 3] = 255;
           }
         } else {
-          // Foreground product enhancement (sharpness & contrast pop)
-          data[i] = Math.min(255, Math.max(0, (r - 128) * 1.12 + 128));
-          data[i + 1] = Math.min(255, Math.max(0, (g - 128) * 1.12 + 128));
-          data[i + 2] = Math.min(255, Math.max(0, (b - 128) * 1.12 + 128));
+          data[i] = Math.min(255, Math.max(0, (r - 128) * 1.1 + 128));
+          data[i + 1] = Math.min(255, Math.max(0, (g - 128) * 1.1 + 128));
+          data[i + 2] = Math.min(255, Math.max(0, (b - 128) * 1.1 + 128));
         }
       }
 
       ctx.putImageData(imgData, 0, 0);
-
-      // Add subtle contact pedestal shadow if shadow mode
-      if (mode === 'shadow') {
-        const gradient = ctx.createRadialGradient(
-          canvas.width / 2,
-          canvas.height * 0.92,
-          canvas.width * 0.1,
-          canvas.width / 2,
-          canvas.height * 0.92,
-          canvas.width * 0.45,
-        );
-        gradient.addColorStop(0, 'rgba(0,0,0,0.22)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
-      }
-
-      const outUrl = mode === 'transparent' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92);
-      setSelectedImg(outUrl);
-      setProcessingBg(false);
+      const out = mode === 'transparent' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.9);
+      setSelectedImg(out);
+      setAiLoading(false);
       successSound();
-      toast(`AI Studio Clean applied (${mode} mode) ✨`);
-    };
-    img.onerror = () => {
-      setProcessingBg(false);
-      toast('Failed to process image', 'err');
+      toast('Studio background cleaned ✨');
     };
     img.src = src;
   };
@@ -514,13 +572,13 @@ export default function ImagePickerModal({
               <div className="flex items-center gap-2">
                 <p className="text-xs font-extrabold text-ink">Selected Photo Preview</p>
                 <span className="rounded-full bg-ok/20 px-2 py-0.5 text-[9px] font-bold text-ok flex items-center gap-1">
-                  <ShieldCheck size={10} /> 100% Free & Unlimited
+                  <Bot size={11} /> Real Neural AI (Free & Unlimited)
                 </span>
               </div>
               <p className="text-[11px] text-ink3 truncate mt-0.5">
                 {selectedImg
                   ? selectedImg.startsWith('data:')
-                    ? 'Local studio-cleaned photo (Stored offline)'
+                    ? 'Local neural-cleaned photo (Stored offline)'
                     : selectedImg.startsWith('http')
                     ? 'High-Definition Web Studio Image'
                     : `Emoji: ${selectedImg}`
@@ -543,10 +601,10 @@ export default function ImagePickerModal({
             <div className="flex flex-wrap items-center gap-1.5 shrink-0 bg-surface/80 p-1.5 rounded-xl border border-line">
               <button
                 type="button"
-                disabled={processingBg}
+                disabled={aiLoading}
                 onClick={() => {
                   setStudioMode('white');
-                  applyStudioClean('white', tolerance);
+                  runAiNeuralBackgroundRemoval('white');
                 }}
                 className={cx('chip text-xs font-bold py-1 px-2.5', studioMode === 'white' && 'chip-on')}
                 title="Amazon/Blinkit style Pure White background"
@@ -555,10 +613,10 @@ export default function ImagePickerModal({
               </button>
               <button
                 type="button"
-                disabled={processingBg}
+                disabled={aiLoading}
                 onClick={() => {
                   setStudioMode('transparent');
-                  applyStudioClean('transparent', tolerance);
+                  runAiNeuralBackgroundRemoval('transparent');
                 }}
                 className={cx('chip text-xs font-bold py-1 px-2.5', studioMode === 'transparent' && 'chip-on')}
                 title="Transparent Cutout"
@@ -567,10 +625,10 @@ export default function ImagePickerModal({
               </button>
               <button
                 type="button"
-                disabled={processingBg}
+                disabled={aiLoading}
                 onClick={() => {
                   setStudioMode('shadow');
-                  applyStudioClean('shadow', tolerance);
+                  runAiNeuralBackgroundRemoval('shadow');
                 }}
                 className={cx('chip text-xs font-bold py-1 px-2.5', studioMode === 'shadow' && 'chip-on')}
                 title="3D Contact Drop Shadow"
@@ -580,6 +638,14 @@ export default function ImagePickerModal({
             </div>
           )}
         </div>
+
+        {/* AI Processing Banner */}
+        {aiLoading && (
+          <div className="flex items-center gap-3 rounded-2xl border border-brand/50 bg-brand/10 p-3 text-xs text-ink font-bold animate-pulse">
+            <RefreshCw size={16} className="animate-spin text-brand shrink-0" />
+            <span>{aiProgressText || 'AI Neural Network is removing background…'}</span>
+          </div>
+        )}
 
         {/* Source Navigation Tabs */}
         <Tabs
