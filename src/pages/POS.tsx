@@ -48,6 +48,7 @@ export default function POS() {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('All');
   const [favOnly, setFavOnly] = useState(false);
+  const [recentOnly, setRecentOnly] = useState(false);
   const [layout, setLayout] = useState<'grid' | 'list'>(s.posLayout);
   const [cartOpen, setCartOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -74,14 +75,15 @@ export default function POS() {
   const filtered = useMemo(() => {
     let list = products.filter((p) => p.active);
     if (favOnly) list = list.filter((p) => p.favorite);
-    if (cat !== 'All') list = list.filter((p) => p.category === cat);
-    if (dq.trim()) return searchProducts(list as any, dq, 400) as any[];
-    if (session.recentProductIds.length) {
+    if (recentOnly && session.recentProductIds.length) {
+      const recentSet = new Set(session.recentProductIds);
       const rank = new Map(session.recentProductIds.map((id, i) => [id, i]));
-      list = [...list].sort((a, b) => (rank.get(a.id) ?? 9999) - (rank.get(b.id) ?? 9999));
+      list = list.filter((p) => recentSet.has(p.id)).sort((a, b) => (rank.get(a.id) ?? 9999) - (rank.get(b.id) ?? 9999));
     }
+    if (!recentOnly && cat !== 'All') list = list.filter((p) => p.category === cat);
+    if (dq.trim()) return searchProducts(list as any, dq, 400) as any[];
     return list;
-  }, [products, dq, cat, favOnly, session.recentProductIds]);
+  }, [products, dq, cat, favOnly, recentOnly, session.recentProductIds]);
 
   const totals = computeTotals(cart.lines, {
     billDiscount: cart.billDiscount,
@@ -499,17 +501,26 @@ export default function POS() {
         {/* Categories Bar */}
         <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
           <button
-            onClick={() => { clickSound(); setFavOnly(!favOnly); }}
+            onClick={() => { clickSound(); setFavOnly(!favOnly); if (!favOnly) setRecentOnly(false); }}
             className={cx('chip flex items-center gap-1 font-bold', favOnly && 'chip-on')}
           >
             <Star size={12} className={favOnly ? 'fill-brand text-brand' : ''} />
             <span>Favourites</span>
           </button>
+          {session.recentProductIds.length > 0 && (
+            <button
+              onClick={() => { clickSound(); setRecentOnly(!recentOnly); if (!recentOnly) setFavOnly(false); }}
+              className={cx('chip flex items-center gap-1 font-bold', recentOnly && 'chip-on')}
+            >
+              <Sparkles size={12} className={recentOnly ? 'text-brand' : ''} />
+              <span>Recent</span>
+            </button>
+          )}
           {categories.slice(0, 30).map((c) => (
             <button
               key={c}
-              onClick={() => { clickSound(); setCat(c); }}
-              className={cx('chip font-bold', cat === c && 'chip-on')}
+              onClick={() => { clickSound(); setCat(c); setRecentOnly(false); }}
+              className={cx('chip font-bold', cat === c && !recentOnly && 'chip-on')}
             >
               {c}
             </button>
