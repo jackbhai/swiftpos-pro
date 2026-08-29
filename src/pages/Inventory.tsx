@@ -49,6 +49,20 @@ export default function Inventory() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const dq = useDebounced(q, 160);
 
+  const handleInventoryScan = (code: string) => {
+    const clean = code.trim();
+    const existing = products.find((p: Product) => p.barcode === clean || p.sku === clean);
+    if (existing) {
+      setEdit(existing);
+      toast(`Found product: ${existing.name}`);
+    } else {
+      const newProd = blank(s.defaultGst);
+      newProd.barcode = clean;
+      setEdit(newProd);
+      toast(`New barcode: ${clean} — add product details`);
+    }
+  };
+
   const categories = useMemo(() => ['All', ...new Set(products.map((p: Product) => p.category))].slice(0, 60), [products]);
 
   const filtered = useMemo(() => {
@@ -199,7 +213,13 @@ export default function Inventory() {
 
       <ProductEditor product={edit} onClose={() => setEdit(null)} onSave={save} vendors={vendors} modules={modules} terms={terms} />
       <AdjustModal product={adjust} onClose={() => setAdjust(null)} />
-      <Scanner open={scannerOpen} onClose={() => setScannerOpen(false)} />
+      <Scanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleInventoryScan}
+        title="Scan Barcode (Inventory)"
+        subtitle="If product exists, it will open for editing. If new, Add Product page will open with barcode pre-filled."
+      />
       <Modal open={logsOpen} onClose={() => setLogsOpen(false)} title="Stock movement log" wide>
         <div className="space-y-1.5">
           {logs.length === 0 && <Empty title="No movements yet" />}
