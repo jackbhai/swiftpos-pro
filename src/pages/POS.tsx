@@ -529,8 +529,8 @@ export default function POS() {
             <VirtualList
               items={filtered}
               columns={layout === 'list' ? 1 : cols}
-              rowHeight={layout === 'list' ? 68 : 148}
-              gap={8}
+              rowHeight={layout === 'list' ? 64 : s.showImages ? 168 : 112}
+              gap={10}
               height="100%"
               render={(p: any) =>
                 layout === 'list' ? (

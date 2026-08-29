@@ -101,7 +101,7 @@ export function mapProduct(row: any, o: ImportOptions, i: number): Product {
     favorite: false,
     active: true,
     trackStock: true,
-    image: pick(row, ['image', 'emoji', 'icon']) ? String(pick(row, ['image', 'emoji', 'icon'])) : undefined,
+    image: pick(row, ['image', 'image_url', 'img_url', 'img', 'photo', 'picture', 'thumbnail', 'emoji', 'icon']) ? String(pick(row, ['image', 'image_url', 'img_url', 'img', 'photo', 'picture', 'thumbnail', 'emoji', 'icon'])) : undefined,
     tags: [String(pick(row, ['unit_type', 'sub_category']) ?? '').trim()].filter(Boolean),
     createdAt: now,
     updatedAt: now,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isStandalone, isIOS, canInstall, hasUpdate } from '../src/lib/pwa';
 import { beep, clickSound, successSound, errorSound, warningSound, cashChime, buzz } from '../src/lib/sound';
+import { isImageUrl } from '../src/components/ui/ProductImage';
 
 describe('PWA Helpers', () => {
   it('detects standalone mode without crashing in jsdom', () => {
@@ -14,6 +15,19 @@ describe('PWA Helpers', () => {
   it('checks installability status', () => {
     expect(typeof canInstall()).toBe('boolean');
     expect(typeof hasUpdate()).toBe('boolean');
+  });
+});
+
+describe('Product Image URL Helpers', () => {
+  it('correctly identifies web and base64 data urls', () => {
+    expect(isImageUrl('https://i.ibb.co/abc/image.png')).toBe(true);
+    expect(isImageUrl('http://example.com/item.jpg')).toBe(true);
+    expect(isImageUrl('data:image/jpeg;base64,...')).toBe(true);
+    expect(isImageUrl('blob:http://localhost/123')).toBe(true);
+    expect(isImageUrl('📦')).toBe(false);
+    expect(isImageUrl('☕')).toBe(false);
+    expect(isImageUrl('')).toBe(false);
+    expect(isImageUrl(null)).toBe(false);
   });
 });
 

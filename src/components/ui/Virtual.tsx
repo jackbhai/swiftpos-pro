@@ -42,13 +42,28 @@ export function VirtualList<T>({
     for (let c = 0; c < columns; c++) {
       const i = r * columns + c;
       if (i >= items.length) break;
-      rowItems.push(<div key={i} style={{ minWidth: 0 }}>{render(items[i], i)}</div>);
+      rowItems.push(
+        <div key={i} style={{ minWidth: 0, height: '100%', overflow: 'hidden' }}>
+          {render(items[i], i)}
+        </div>,
+      );
     }
     slices.push(
-      <div key={r} style={{
-        position: 'absolute', top: r * stride, left: 0, right: 0, height: rowHeight,
-        display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`, gap,
-      }}>{rowItems}</div>,
+      <div
+        key={r}
+        style={{
+          position: 'absolute',
+          top: r * stride,
+          left: 0,
+          right: 0,
+          height: rowHeight,
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`,
+          gap,
+        }}
+      >
+        {rowItems}
+      </div>,
     );
   }
 

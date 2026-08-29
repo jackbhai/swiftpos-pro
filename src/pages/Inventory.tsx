@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, Filter, Download, Upload, Star, Pencil, Trash2, PackagePlus, ArrowUpDown,
-  AlertTriangle, CalendarClock, Boxes, Search, Grid3x3, List, ChevronDown,
+  AlertTriangle, CalendarClock, Boxes, Search, Grid3x3, List, ChevronDown, Camera, Image as ImageIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useVendors, useStockLogs } from '@/hooks/useData';
@@ -14,6 +14,8 @@ import { downloadCSV } from '@/lib/csv';
 import { Card, Stat, Modal, Field, Input, Select, Empty, SearchBar, Badge, Tabs, Toggle, ConfirmBtn } from '@/components/ui';
 import { useSettings, useShop } from '@/store/settings';
 import { toast, toastUndo } from '@/store/ui';
+import ProductImage from '@/components/ui/ProductImage';
+import ImagePickerModal from '@/components/ui/ImagePickerModal';
 import type { Product } from '@/db/types';
 
 type SortKey = 'name' | 'stock' | 'price' | 'value' | 'updated';
@@ -58,13 +60,13 @@ export default function Inventory() {
     const dir = asc ? 1 : -1;
     {
       list.sort((a, b) => {
-      switch (sort) {
-        case 'stock': return (a.stock - b.stock) * dir;
-        case 'price': return (a.price - b.price) * dir;
-        case 'value': return (a.stock * a.cost - b.stock * b.cost) * dir;
-        case 'updated': return (a.updatedAt - b.updatedAt) * dir;
-        default: return a.name.localeCompare(b.name) * dir;
-      }
+        switch (sort) {
+          case 'stock': return (a.stock - b.stock) * dir;
+          case 'price': return (a.price - b.price) * dir;
+          case 'value': return (a.stock * a.cost - b.stock * b.cost) * dir;
+          case 'updated': return (a.updatedAt - b.updatedAt) * dir;
+          default: return a.name.localeCompare(b.name) * dir;
+        }
       });
     }
     return list;
@@ -154,15 +156,15 @@ export default function Inventory() {
           </div>
           <VirtualList
             items={filtered}
-            rowHeight={view === 'list' ? 56 : 128}
+            rowHeight={view === 'list' ? 62 : 180}
             columns={view === 'list' ? 1 : (typeof window !== 'undefined' && window.innerWidth > 1024 ? 5 : 2)}
-            gap={view === 'list' ? 0 : 8}
+            gap={view === 'list' ? 0 : 10}
             height="calc(100dvh - 330px)"
-            className={view === 'grid' ? 'p-2.5' : ''}
+            className={view === 'grid' ? 'p-3' : ''}
             render={(p: any) => view === 'list' ? (
               <InvRow p={p} currency={s.currency} expiryDays={s.expiryAlertDays} hideCost={s.hideCostPrices}
                 checked={selected.has(p.id)}
-                onCheck={(v) => setSelected((prev) => { const n = new Set(prev); v ? n.add(p.id) : n.delete(p.id); return n; })}
+                onCheck={(v: boolean) => setSelected((prev) => { const n = new Set(prev); v ? n.add(p.id) : n.delete(p.id); return n; })}
                 onEdit={() => setEdit(p)} onAdjust={() => setAdjust(p)}
                 onFav={() => db.products.update(p.id, { favorite: !p.favorite })}
                 onDelete={async () => {
@@ -171,10 +173,18 @@ export default function Inventory() {
                   toastUndo(`${p.name} deleted`, async () => { if (backup) { await db.products.put(backup); toast('Restored'); } });
                 }} />
             ) : (
-              <button onClick={() => setEdit(p)} className="card card-hover h-full w-full p-3 text-left">
-                <p className="line-clamp-2 min-h-[34px] text-xs font-semibold text-ink">{p.name}</p>
-                <p className="mt-1 font-mono text-sm font-bold text-brand">{money(p.price, s.currency)}</p>
-                <p className={cx('text-[11px] font-bold', stockState(p) === 'out' ? 'text-bad' : stockState(p) === 'low' ? 'text-warn' : 'text-ink3')}>{p.stock} {p.unit}</p>
+              <button onClick={() => setEdit(p)} className="card card-hover h-full w-full p-2.5 text-left flex flex-col justify-between overflow-hidden">
+                <div className="w-full">
+                  <div className="h-16 w-full overflow-hidden rounded-xl bg-surface2/60 border border-line/50 mb-1.5 flex items-center justify-center">
+                    <ProductImage src={p.image} alt={p.name} emojiClassName="text-3xl" />
+                  </div>
+                  <p className="line-clamp-2 text-xs font-bold text-ink leading-tight">{p.name}</p>
+                  <p className="text-[10px] text-ink3 truncate mt-0.5">{p.category}{p.brand ? ' · ' + p.brand : ''}</p>
+                </div>
+                <div className="mt-1 pt-1 border-t border-line/40 flex items-end justify-between w-full">
+                  <span className="font-mono text-xs sm:text-sm font-extrabold text-brand">{money(p.price, s.currency)}</span>
+                  <span className={cx('text-[10px] font-bold', stockState(p) === 'out' ? 'text-bad' : stockState(p) === 'low' ? 'text-warn' : 'text-ink2')}>{p.stock} {p.unit}</span>
+                </div>
               </button>
             )}
           />
@@ -204,55 +214,120 @@ export default function Inventory() {
 
 function ProductEditor({ product, onClose, onSave, vendors, modules, terms }: any) {
   const [f, setF] = useState<Product | null>(product);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
   const s = useSettings();
   const { profile } = useShop();
+
   useMemo(() => setF(product), [product]);
   if (!f) return null;
+
   const up = (k: keyof Product, v: any) => setF({ ...f, [k]: v } as Product);
   const margin = f.price > 0 ? ((f.price - f.cost) / f.price) * 100 : 0;
 
   return (
-    <Modal open={!!product} onClose={onClose} wide title={f.id ? `Edit ${terms.product.toLowerCase()}` : `New ${terms.product.toLowerCase()}`}
-      footer={<div className="flex gap-2"><button className="btn-ghost flex-1" onClick={onClose}>Cancel</button><button className="btn-primary flex-1" onClick={() => onSave(f)}>Save</button></div>}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Name" className="sm:col-span-2"><Input value={f.name} onChange={(e) => up('name', e.target.value)} autoFocus /></Field>
-        <Field label="Category">
-          <Input list="cats" value={f.category} onChange={(e) => up('category', e.target.value)} />
-          <datalist id="cats">{profile.categories.map((c: string) => <option key={c} value={c} />)}</datalist>
-        </Field>
-        <Field label="Brand"><Input value={f.brand ?? ''} onChange={(e) => up('brand', e.target.value)} /></Field>
-        <Field label="SKU"><Input value={f.sku} onChange={(e) => up('sku', e.target.value)} /></Field>
-        <Field label="Barcode"><Input value={f.barcode ?? ''} onChange={(e) => up('barcode', e.target.value)} /></Field>
-        <Field label="Cost price"><Input inputMode="decimal" value={f.cost} onChange={(e) => up('cost', +e.target.value || 0)} /></Field>
-        <Field label={`Selling price · margin ${margin.toFixed(0)}%`}><Input inputMode="decimal" value={f.price} onChange={(e) => up('price', +e.target.value || 0)} /></Field>
-        <Field label="MRP"><Input inputMode="decimal" value={f.mrp ?? 0} onChange={(e) => up('mrp', +e.target.value || 0)} /></Field>
-        <Field label="GST %"><Input inputMode="decimal" value={f.gst} onChange={(e) => up('gst', +e.target.value || 0)} /></Field>
-        <Field label={terms.stock}><Input inputMode="decimal" value={f.stock} onChange={(e) => up('stock', +e.target.value || 0)} /></Field>
-        <Field label="Low stock alert at"><Input inputMode="decimal" value={f.lowStock} onChange={(e) => up('lowStock', +e.target.value || 0)} /></Field>
-        <Field label="Unit">
-          <Select value={f.unit} onChange={(e) => up('unit', e.target.value)}>
-            {[...new Set([...profile.units, 'pc', 'kg', 'g', 'l', 'ml', 'box', 'pack', 'dozen'])].map((u) => <option key={u} value={u}>{u}</option>)}
-          </Select>
-        </Field>
-        <Field label="HSN / SAC"><Input value={f.hsn ?? ''} onChange={(e) => up('hsn', e.target.value)} /></Field>
-        <Field label={terms.vendor}>
-          <Select value={f.vendorId ?? ''} onChange={(e) => up('vendorId', e.target.value)}>
-            <option value="">—</option>{vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
-          </Select>
-        </Field>
-        {modules.batchExpiry && <>
-          <Field label="Batch no."><Input value={f.batch ?? ''} onChange={(e) => up('batch', e.target.value)} /></Field>
-          <Field label="Expiry date"><Input type="date" value={f.expiry ?? ''} onChange={(e) => up('expiry', e.target.value)} /></Field>
-        </>}
-        <Field label="Rack / shelf"><Input value={f.rack ?? ''} onChange={(e) => up('rack', e.target.value)} /></Field>
-        <Field label="Emoji / icon"><Input value={f.image ?? ''} onChange={(e) => up('image', e.target.value)} placeholder="📦" /></Field>
-        <div className="space-y-2 sm:col-span-2">
-          <Toggle checked={f.active} onChange={(v) => up('active', v)} label="Active" hint="Show in billing screen" />
-          <Toggle checked={f.trackStock} onChange={(v) => up('trackStock', v)} label="Track stock" hint="Deduct quantity on every sale" />
-          <Toggle checked={!!f.favorite} onChange={(v) => up('favorite', v)} label="Favourite" hint="Pin to quick-access row" />
+    <>
+      <Modal
+        open={!!product}
+        onClose={onClose}
+        wide
+        title={f.id ? `Edit ${terms.product}` : `New ${terms.product}`}
+        footer={
+          <div className="flex gap-2">
+            <button className="btn-ghost flex-1" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn-primary flex-1" onClick={() => onSave(f)}>
+              Save {terms.product}
+            </button>
+          </div>
+        }
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* Product Image Selector Card */}
+          <div className="sm:col-span-2 rounded-2xl border border-line bg-surface2/40 p-3.5 flex items-center gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-brand/40 bg-surface shadow-sm flex items-center justify-center">
+              <ProductImage src={f.image} alt={f.name} emojiClassName="text-3xl" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-ink">Product Image / Photo</p>
+              <p className="text-[11px] text-ink3 truncate mt-0.5">
+                {f.image
+                  ? f.image.startsWith('data:')
+                    ? 'Local uploaded photo'
+                    : f.image.startsWith('http')
+                    ? f.image
+                    : `Emoji: ${f.image}`
+                  : 'No photo selected (displays 📦 by default)'}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImageModalOpen(true)}
+                  className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-none"
+                >
+                  <Camera size={13} /> Choose / Upload Photo
+                </button>
+                {f.image && (
+                  <button
+                    type="button"
+                    onClick={() => up('image', '')}
+                    className="btn-ghost text-xs py-1.5 px-2.5 flex items-center gap-1 text-bad hover:border-bad/40"
+                  >
+                    <Trash2 size={13} /> Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Field label="Name" className="sm:col-span-2">
+            <Input value={f.name} onChange={(e) => up('name', e.target.value)} autoFocus />
+          </Field>
+          <Field label="Category">
+            <Input list="cats" value={f.category} onChange={(e) => up('category', e.target.value)} />
+            <datalist id="cats">{profile.categories.map((c: string) => <option key={c} value={c} />)}</datalist>
+          </Field>
+          <Field label="Brand"><Input value={f.brand ?? ''} onChange={(e) => up('brand', e.target.value)} /></Field>
+          <Field label="SKU"><Input value={f.sku} onChange={(e) => up('sku', e.target.value)} /></Field>
+          <Field label="Barcode / EAN"><Input value={f.barcode ?? ''} onChange={(e) => up('barcode', e.target.value)} /></Field>
+          <Field label="Cost price"><Input inputMode="decimal" value={f.cost} onChange={(e) => up('cost', +e.target.value || 0)} /></Field>
+          <Field label={`Selling price · margin ${margin.toFixed(0)}%`}><Input inputMode="decimal" value={f.price} onChange={(e) => up('price', +e.target.value || 0)} /></Field>
+          <Field label="MRP"><Input inputMode="decimal" value={f.mrp ?? 0} onChange={(e) => up('mrp', +e.target.value || 0)} /></Field>
+          <Field label="GST %"><Input inputMode="decimal" value={f.gst} onChange={(e) => up('gst', +e.target.value || 0)} /></Field>
+          <Field label={terms.stock}><Input inputMode="decimal" value={f.stock} onChange={(e) => up('stock', +e.target.value || 0)} /></Field>
+          <Field label="Low stock alert at"><Input inputMode="decimal" value={f.lowStock} onChange={(e) => up('lowStock', +e.target.value || 0)} /></Field>
+          <Field label="Unit">
+            <Select value={f.unit} onChange={(e) => up('unit', e.target.value)}>
+              {[...new Set([...profile.units, 'pc', 'kg', 'g', 'l', 'ml', 'box', 'pack', 'dozen'])].map((u) => <option key={u} value={u}>{u}</option>)}
+            </Select>
+          </Field>
+          <Field label="HSN / SAC"><Input value={f.hsn ?? ''} onChange={(e) => up('hsn', e.target.value)} /></Field>
+          <Field label={terms.vendor}>
+            <Select value={f.vendorId ?? ''} onChange={(e) => up('vendorId', e.target.value)}>
+              <option value="">—</option>{vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </Select>
+          </Field>
+          {modules.batchExpiry && <>
+            <Field label="Batch no."><Input value={f.batch ?? ''} onChange={(e) => up('batch', e.target.value)} /></Field>
+            <Field label="Expiry date"><Input type="date" value={f.expiry ?? ''} onChange={(e) => up('expiry', e.target.value)} /></Field>
+          </>}
+          <Field label="Rack / shelf"><Input value={f.rack ?? ''} onChange={(e) => up('rack', e.target.value)} /></Field>
+          <div className="space-y-2 sm:col-span-2 pt-2 border-t border-line">
+            <Toggle checked={f.active} onChange={(v) => up('active', v)} label="Active in POS" hint="Visible on terminal billing screen" />
+            <Toggle checked={f.trackStock} onChange={(v) => up('trackStock', v)} label="Track stock" hint="Deduct quantity automatically on each sale" />
+            <Toggle checked={!!f.favorite} onChange={(v) => up('favorite', v)} label="Favourite" hint="Pin to top favourites row" />
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      <ImagePickerModal
+        open={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        value={f.image}
+        productName={f.name || 'Product'}
+        onSelect={(img) => up('image', img || '')}
+      />
+    </>
   );
 }
 
@@ -287,14 +362,16 @@ function AdjustModal({ product, onClose }: { product: Product | null; onClose: (
   );
 }
 
-
 function InvRow({ p, currency, expiryDays, hideCost, checked, onCheck, onEdit, onAdjust, onFav, onDelete }: any) {
   const st = stockState(p); const ex = expiryState(p, expiryDays);
   const margin = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
   return (
-    <div className="flex h-full items-center gap-2 border-b border-line px-3 hover:bg-surface2/50">
+    <div className="flex h-full items-center gap-2.5 border-b border-line px-3 hover:bg-surface2/50 overflow-hidden">
       <input type="checkbox" className="h-4 w-4 shrink-0 accent-cyan-400" checked={checked} onChange={(e) => onCheck(e.target.checked)} />
       <button onClick={onFav} className="shrink-0"><Star size={13} className={p.favorite ? 'fill-warn text-warn' : 'text-ink3'} /></button>
+      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-surface2 border border-line/60 flex items-center justify-center">
+        <ProductImage src={p.image} alt={p.name} emojiClassName="text-base" />
+      </div>
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-ink">{p.name}</p>
         <p className="truncate text-[11px] text-ink3">{p.sku}{p.brand ? ' · ' + p.brand : ''} · {p.category}{p.batch ? ' · B:' + p.batch : ''}</p>

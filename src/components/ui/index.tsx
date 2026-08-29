@@ -112,12 +112,12 @@ export const Empty: React.FC<{ title: string; sub?: string; action?: React.React
 
 export const Spinner = () => <Loader2 className="animate-spin text-brand" size={20} />;
 
-export const Badge: React.FC<{ tone?: 'ok' | 'warn' | 'bad' | 'brand' | 'muted'; children: React.ReactNode }> = ({ tone = 'muted', children }) => {
+export const Badge: React.FC<{ tone?: 'ok' | 'warn' | 'bad' | 'brand' | 'muted'; children: React.ReactNode; className?: string }> = ({ tone = 'muted', children, className }) => {
   const map = {
     ok: 'bg-ok/15 text-ok', warn: 'bg-warn/15 text-warn', bad: 'bg-bad/15 text-bad',
     brand: 'bg-brand/15 text-brand', muted: 'bg-surface2 text-ink3 border border-line',
   } as const;
-  return <span className={cx('pill', map[tone])}>{children}</span>;
+  return <span className={cx('pill', map[tone], className)}>{children}</span>;
 };
 
 export const Tabs: React.FC<{ tabs: { id: string; label: string; count?: number }[]; active: string; onChange: (id: string) => void }> = ({ tabs, active, onChange }) => (
