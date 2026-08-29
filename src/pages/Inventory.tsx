@@ -25,6 +25,8 @@ const blank = (gst: number): Product => ({
   stock: 0, lowStock: 10, gst, active: true, trackStock: true, createdAt: Date.now(), updatedAt: Date.now(),
 });
 
+import Scanner from '@/components/pos/Scanner';
+
 export default function Inventory() {
   const { products, loading } = useCatalog();
   const vendors = useVendors() || [];
@@ -42,6 +44,7 @@ export default function Inventory() {
   const [limit, setLimit] = useState(50);
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [logsOpen, setLogsOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const dq = useDebounced(q, 160);
@@ -105,6 +108,7 @@ export default function Inventory() {
         <div className="flex flex-wrap items-center gap-2">
           <SearchBar value={q} onChange={setQ} placeholder={`Search ${terms.products.toLowerCase()}…`} />
           <button className="btn-primary" onClick={() => setEdit(blank(s.defaultGst))}><Plus size={16} /> Add</button>
+          <button className="btn-soft" onClick={() => setScannerOpen(true)} title="Scan product box with camera to auto-intake"><Camera size={15} /> Camera Intake</button>
           <Link className="btn-ghost" to="/settings?tab=json"><Upload size={15} /> Import</Link>
           <button className="btn-ghost" onClick={exportAll}><Download size={15} /> CSV</button>
           <button className="btn-ghost" onClick={() => setLogsOpen(true)}><ArrowUpDown size={15} /> Stock log</button>
@@ -195,6 +199,7 @@ export default function Inventory() {
 
       <ProductEditor product={edit} onClose={() => setEdit(null)} onSave={save} vendors={vendors} modules={modules} terms={terms} />
       <AdjustModal product={adjust} onClose={() => setAdjust(null)} />
+      <Scanner open={scannerOpen} onClose={() => setScannerOpen(false)} />
       <Modal open={logsOpen} onClose={() => setLogsOpen(false)} title="Stock movement log" wide>
         <div className="space-y-1.5">
           {logs.length === 0 && <Empty title="No movements yet" />}
