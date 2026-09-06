@@ -181,5 +181,6 @@ export function parsedToSettings(p: ParsedBill): Partial<Settings> {
   if (p.website) o.website = p.website;
   if (p.gstin) o.gstin = p.gstin;
   if (p.fssai) o.fssai = p.fssai;
+  if (p.cin) o.cinNo = p.cin;
   return o;
 }

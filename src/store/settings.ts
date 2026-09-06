@@ -26,7 +26,7 @@ export interface Settings {
   shopType: ShopTypeId;
   moduleOverrides: Partial<ShopProfile['modules']>;
   shopName: string; tagline: string; address: string; phone: string; phone2: string; email: string;
-  website: string; gstin: string; fssai: string; drugLicense: string; panNo: string;
+  website: string; gstin: string; fssai: string; drugLicense: string; panNo: string; cinNo: string;
   currency: string; currencyPosition: 'before' | 'after'; decimals: 0 | 1 | 2;
   logoEmoji: string; logoDataUrl: string; signatureDataUrl: string;
   dateFormat: 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy-mm-dd' | 'dd MMM yyyy';
@@ -94,7 +94,7 @@ export const defaultSettings: Settings = {
   shopType: 'grocery', moduleOverrides: {},
   shopName: 'SwiftPOS Store', tagline: 'Fast. Offline. Yours.',
   address: 'Connaught Place, New Delhi 110001', phone: '+91 98100 00000', phone2: '',
-  email: 'hello@swiftpos.app', website: '', gstin: '07AAACS1234A1Z5', fssai: '', drugLicense: '', panNo: '',
+  email: 'hello@swiftpos.app', website: '', gstin: '07AAACS1234A1Z5', fssai: '', drugLicense: '', panNo: '', cinNo: '',
   currency: '₹', currencyPosition: 'before', decimals: 2,
   logoEmoji: '⚡', logoDataUrl: '', signatureDataUrl: '',
   dateFormat: 'dd MMM yyyy', language: 'en',
@@ -180,7 +180,8 @@ export const useSettings = create<SettingsStore>()(
         set({
           systemId: id, capOverrides: {}, shopType: sys.base, moduleOverrides: {},
           accent: sys.accent, quickCash: prof.quickCash,
-          defaultTemplate: sys.caps.includes('kot') ? 'thermal-restaurant'
+          defaultTemplate: id === 'sweets' ? 'thermal-mithai'
+            : sys.caps.includes('kot') ? 'thermal-restaurant'
             : sys.caps.includes('prescription') ? 'thermal-pharmacy' : 'thermal-classic',
           restaurantMode: sys.caps.includes('tables'),
           ...sys.defaults,

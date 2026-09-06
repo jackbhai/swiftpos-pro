@@ -1,5 +1,5 @@
 /* ── Receipt / invoice template engine ──────────────────────────────
-   20 built-in templates + user-uploaded custom templates.
+   21 built-in templates + user-uploaded custom templates.
    Templates are HTML with {{tokens}}, {{#items}}…{{/items}} loops and
    {{#if token}}…{{/if}} blocks — no framework, printable anywhere. */
 
@@ -17,6 +17,48 @@ export interface TemplateDef {
 
 export interface RenderExtras { upiQr?: string; upiId?: string; copyLabel?: string; logo?: string }
 
+/** 3-decimal quantity for weighed goods (mithai / namkeen) — 0.250, 1.500, 2.000. */
+export const fmtQty3 = (q: number) => (Number.isFinite(q) ? q : 0).toFixed(3);
+
+/** Token / queue number: captured meta first, else the numeric tail of the bill no. (INV-00042 → 42). */
+export function tokenNo(sale: Sale): string {
+  const m: any = sale.meta ?? {};
+  const raw = m.token ?? m.tokenNo ?? m.token_no ?? m.tableNo ?? '';
+  if (raw !== '' && raw !== undefined && raw !== null) return String(raw);
+  const tail = String(sale.invoiceNo ?? '').match(/(\d+)\D*$/);
+  return tail ? String(parseInt(tail[1], 10)) : '';
+}
+
+export interface GstSummaryRow { rate: number; taxable: number; cgst: number; sgst: number }
+
+/** Rate-wise GST split (5% / 12% / 18% …) with bill-level discounts spread proportionally — the
+ *  "GST SUMMARY" block halwai bills print under the total. */
+export function gstSummary(sale: Sale, taxInclusive = true): { rows: GstSummaryRow[]; lines: (GstSummaryRow & { idx: number })[] } {
+  const gross = sale.lines.reduce((t, l) => t + l.price * l.qty, 0);
+  const itemDisc = sale.lines.reduce((t, l) => t + (l.discount || 0), 0);
+  const afterItem = Math.max(0, gross - itemDisc);
+  const net = Math.max(0, afterItem - (sale.billDiscount || 0) - (sale.couponValue || 0));
+  const ratio = afterItem > 0 ? net / afterItem : 0;
+  const byRate = new Map<number, GstSummaryRow>();
+  const lines: (GstSummaryRow & { idx: number })[] = [];
+  sale.lines.forEach((l, idx) => {
+    const lineNet = (l.price * l.qty - (l.discount || 0)) * ratio;
+    const rate = l.gst || 0;
+    const tax = taxInclusive ? (lineNet * rate) / (100 + rate) : (lineNet * rate) / 100;
+    const taxable = taxInclusive ? lineNet - tax : lineNet;
+    const row = { idx, rate, taxable: r2(taxable), cgst: r2(tax / 2), sgst: r2(tax / 2) };
+    lines.push(row);
+    const acc = byRate.get(rate) ?? { rate, taxable: 0, cgst: 0, sgst: 0 };
+    acc.taxable += taxable; acc.cgst += tax / 2; acc.sgst += tax / 2;
+    byRate.set(rate, acc);
+  });
+  const rows = [...byRate.values()]
+    .map((r) => ({ ...r, taxable: r2(r.taxable), cgst: r2(r.cgst), sgst: r2(r.sgst) }))
+    .sort((a, b) => a.rate - b.rate);
+  return { rows, lines };
+}
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
 export function buildContext(sale: Sale, s: Settings, x: RenderExtras = {}) {
   const cur = s.currency;
   const fx = (n: number) => (s.currencyPosition === 'after'
@@ -31,16 +73,36 @@ export function buildContext(sale: Sale, s: Settings, x: RenderExtras = {}) {
   }));
   const savings = (sale.itemDiscount || 0) + (sale.billDiscount || 0) + (sale.couponValue || 0);
   const anySale: any = sale;
+  const gstRows = gstSummary(sale, s.taxInclusive !== false);
+  const lineTax = new Map(gstRows.lines.map((l) => [l.idx, l]));
+  const items3 = items.map((it, i) => {
+    const lt = lineTax.get(i);
+    return {
+      ...it, qty3: fmtQty3(it.qty),
+      taxable: fx(lt?.taxable ?? 0), cgst_amt: fx(lt?.cgst ?? 0), sgst_amt: fx(lt?.sgst ?? 0),
+    };
+  });
+  const qtyTotal = sale.lines.reduce((t, l) => t + l.qty, 0);
   return {
     shop_name: s.shopName, tagline: s.tagline, address: s.address, phone: s.phone, phone2: s.phone2,
     email: s.email, website: s.website, gstin: s.gstin, fssai: s.fssai, drug_license: s.drugLicense, pan: s.panNo,
+    cin: (s as any).cinNo ?? '', token_no: tokenNo(sale),
     logo: x.logo ?? s.logoDataUrl, logo_emoji: s.logoEmoji, signature: s.signatureDataUrl,
     invoice_no: sale.invoiceNo, date: d.toLocaleDateString('en-IN'), time: d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     datetime: d.toLocaleString('en-IN'), copy_label: x.copyLabel ?? '',
     customer_name: sale.customerName ?? 'Walk-in', customer_phone: (anySale.customerPhone ?? ''),
     staff: sale.staffName ?? '', channel: (sale.channel ?? 'counter').toUpperCase(), table: anySale.tableName ?? '',
     note: sale.note ?? '', terms: s.termsText, footer: s.footerNote,
-    items, item_count: sale.lines.length, qty_total: sale.lines.reduce((t, l) => t + l.qty, 0),
+    items: items3, item_count: sale.lines.length, qty_total: qtyTotal, qty_total3: fmtQty3(qtyTotal),
+    gst_summary: gstRows.rows.map((r) => ({
+      rate: r.rate + '%', half_rate: (r.rate / 2) + '%', taxable: fx(r.taxable),
+      cgst: fx(r.cgst), sgst: fx(r.sgst), tax: fx(r.cgst + r.sgst), gross: fx(r.taxable + r.cgst + r.sgst),
+    })),
+    has_gst_summary: gstRows.rows.length > 0,
+    gst_sum_taxable: fx(gstRows.rows.reduce((t, r) => t + r.taxable, 0)),
+    gst_sum_cgst: fx(gstRows.rows.reduce((t, r) => t + r.cgst, 0)),
+    gst_sum_sgst: fx(gstRows.rows.reduce((t, r) => t + r.sgst, 0)),
+    gst_sum_tax: fx(gstRows.rows.reduce((t, r) => t + r.cgst + r.sgst, 0)),
     subtotal: fx(sale.subTotal), item_discount: fx(sale.itemDiscount), bill_discount: fx(sale.billDiscount),
     coupon: sale.couponCode ?? '', coupon_value: fx(sale.couponValue),
     service_charge: fx(anySale.serviceCharge ?? 0), delivery_charge: fx(anySale.deliveryCharge ?? 0),
@@ -134,7 +196,7 @@ const TOTALS_THERMAL = `
 
 const UPI_BLOCK = `{{#upi_qr}}<div class="hr"></div><div class="c"><div class="b sm">SCAN TO PAY</div><img class="qr" src="{{upi_qr}}"/><div class="xs">{{upi_id}}</div></div>{{/upi_qr}}`;
 
-/* ── 20 built-in templates ──────────────────────────────────────── */
+/* ── 21 built-in templates ──────────────────────────────────────── */
 
 export const TEMPLATES: TemplateDef[] = [
   {
@@ -237,6 +299,64 @@ export const TEMPLATES: TemplateDef[] = [
 <div class="hr"></div>` + TOTALS_THERMAL + UPI_BLOCK + `
 <div class="hr"></div><div class="xs">Not dispensed without a valid prescription. {{terms}}</div>
 <div class="c xs" style="margin-top:8px">Pharmacist signature: ____________</div>` + FOOT,
+  },
+  {
+    id: 'thermal-mithai', name: 'Mithai / Halwai 80mm', paper: '80mm', group: 'Thermal',
+    desc: 'Kali Ghata-style sweets bill — CIN / FSSAI header, 3-decimal qty, HSN per item, rate-wise GST summary, tender & balance, big Token No.',
+    html: HEAD('{{invoice_no}}', thermal('80mm', `
+body{font-size:11.5px}
+h1{font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.kv td{padding:.5px 0}.kv td:nth-child(2){text-align:right}
+.it td{padding:1px 0}.it .nm{font-weight:700}
+.gs td,.gs th{font-size:9.5px;padding:1px 0}.gs th{text-align:right;border-bottom:1px solid #000;font-weight:700}.gs th:first-child{text-align:left}
+.pay{font-size:14px;font-weight:900}
+.tok{border:2px solid #000;padding:3px 8px;margin:5px auto 3px;display:table;text-align:center}
+.tok .l{font-size:9px;letter-spacing:.2em}.tok .n{font-size:32px;font-weight:900;line-height:1.05}
+.lbl{font-size:10px;letter-spacing:.2em;text-align:center;font-weight:700}
+`)) + `
+<div class="c">{{#logo}}<img src="{{logo}}" style="max-height:44px;max-width:60mm;margin-bottom:2px"/>{{/logo}}
+<h1>{{shop_name}}</h1>{{#tagline}}<div class="sm b">{{tagline}}</div>{{/tagline}}
+<div class="xs">{{address}}</div>
+{{#cin}}<div class="xs">CIN: {{cin}}</div>{{/cin}}
+<div class="xs">{{phone}}{{#phone2}} / {{phone2}}{{/phone2}}</div>
+{{#gstin}}<div class="xs b">GSTIN: {{gstin}}</div>{{/gstin}}
+{{#fssai}}<div class="xs">FSSAI: {{fssai}}</div>{{/fssai}}</div>
+<div class="hr2"></div><div class="lbl">INVOICE{{#copy_label}} · {{copy_label}}{{/copy_label}}</div><div class="hr2"></div>
+<table class="xs kv"><tr><td>Bill No : <b>{{invoice_no}}</b></td><td>Bill Date: {{date}}</td></tr>
+<tr><td>Bill Type: {{channel}}</td><td>Cashier: {{staff}}</td></tr>
+<tr><td>No of Items : {{item_count}}</td><td>Time : {{time}}</td></tr>
+<tr><td colspan="2">Customer: {{customer_name}}{{#customer_phone}} · {{customer_phone}}{{/customer_phone}}</td></tr></table>
+<div class="hr"></div>
+<table class="it">
+<tr class="b xs"><td>DESCRIPTION</td><td class="r">QTY</td><td class="r">RATE</td><td class="r">AMOUNT</td></tr>
+{{#items}}<tr><td class="nm">*{{name}}</td><td class="r">{{qty3}}</td><td class="r">{{rate}}</td><td class="r">{{amount}}</td></tr>
+<tr><td colspan="4" class="xs">{{#hsn}}HSN : {{hsn}} · {{/hsn}}GST {{gst}} · {{unit}}{{#note}} · {{note}}{{/note}}</td></tr>{{/items}}
+</table>
+<div class="hr"></div>
+<table class="sm kv"><tr><td>Net Qty : {{qty_total3}}</td><td>Bill Total : {{subtotal}}</td></tr>
+{{#has_savings}}<tr><td>Discount</td><td>-{{savings}}</td></tr>{{/has_savings}}
+<tr><td>Packing / Box</td><td>{{packaging_charge}}</td></tr>
+<tr><td>Round Off</td><td>{{round_off}}</td></tr></table>
+<div class="hr2"></div>
+<table><tr class="pay"><td>Payable Amt</td><td class="r">{{total}}</td></tr></table>
+<div class="xs">{{total_words}}</div>
+<div class="hr"></div>
+<table class="sm kv"><tr><td>Payment Mode- {{pay_mode}}</td><td>{{total}}</td></tr>
+<tr><td>Tax Detail</td><td>{{gst_total}}</td></tr>
+{{#tendered}}<tr><td>Tender Amount</td><td>{{tendered}}</td></tr><tr><td>Balance Amount</td><td>{{change}}</td></tr>{{/tendered}}
+{{#points_earned}}<tr><td>Points earned</td><td>{{points_earned}}</td></tr>{{/points_earned}}</table>
+{{#has_gst_summary}}<div class="hr"></div><div class="lbl">GST SUMMARY</div>
+<table class="gs"><tr><th>GST%</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>Tax</th></tr>
+{{#gst_summary}}<tr><td>OUT @{{rate}}</td><td class="r">{{taxable}}</td><td class="r">{{cgst}}</td><td class="r">{{sgst}}</td><td class="r">{{tax}}</td></tr>{{/gst_summary}}
+<tr class="b"><td>Total</td><td class="r">{{gst_sum_taxable}}</td><td class="r">{{gst_sum_cgst}}</td><td class="r">{{gst_sum_sgst}}</td><td class="r">{{gst_sum_tax}}</td></tr></table>{{/has_gst_summary}}
+{{#token_no}}<div class="tok"><div class="l">TOKEN NO.</div><div class="n">{{token_no}}</div></div>
+<div class="c xs">Token dikhakar counter se order collect karein.</div>{{/token_no}}` + UPI_BLOCK + `
+<div class="hr"></div>
+<div class="c b sm">**Thanks for your visit**</div><div class="c sm">***Have A Nice Day***</div>
+{{#website}}<div class="c xs">{{website}}</div>{{/website}}
+<div class="c xs" style="margin-top:2px">{{footer}}</div>
+{{#barcode}}<div class="c"><img src="{{barcode}}" style="height:38px"/></div>{{/barcode}}
+<div class="c xs">Powered by SwiftPOS Pro</div>` + FOOT,
   },
   {
     id: 'thermal-token', name: 'Token / Queue Slip', paper: '58mm', group: 'Thermal',
@@ -445,6 +565,8 @@ export const TEMPLATE_TOKENS: { token: string; desc: string }[] = [
   { token: '{{email}}', desc: 'Email' }, { token: '{{website}}', desc: 'Website' },
   { token: '{{gstin}}', desc: 'GSTIN' }, { token: '{{fssai}}', desc: 'FSSAI licence' },
   { token: '{{drug_license}}', desc: 'Drug licence no.' }, { token: '{{pan}}', desc: 'PAN' },
+  { token: '{{cin}}', desc: 'CIN (company registration no.)' },
+  { token: '{{token_no}}', desc: 'Token / queue no. (captured on bill, else bill-no tail)' },
   { token: '{{logo}}', desc: 'Uploaded logo (data URL)' }, { token: '{{signature}}', desc: 'Signature image' },
   { token: '{{invoice_no}}', desc: 'Bill number' }, { token: '{{date}} {{time}} {{datetime}}', desc: 'Date & time' },
   { token: '{{customer_name}}', desc: 'Customer name' }, { token: '{{customer_phone}}', desc: 'Customer phone' },
@@ -452,7 +574,10 @@ export const TEMPLATE_TOKENS: { token: string; desc: string }[] = [
   { token: '{{table}}', desc: 'Table name (restaurants)' }, { token: '{{copy_label}}', desc: 'CUSTOMER / MERCHANT copy' },
   { token: '{{#items}} … {{/items}}', desc: 'Loop over line items' },
   { token: '{{sr}} {{name}} {{qty}} {{unit}} {{rate}} {{mrp}} {{gst}} {{hsn}} {{disc}} {{amount}} {{note}}', desc: 'Available inside the items loop' },
-  { token: '{{item_count}} {{qty_total}}', desc: 'Counts' },
+  { token: '{{qty3}} {{taxable}} {{cgst_amt}} {{sgst_amt}}', desc: 'Items loop: 3-decimal kg qty + per-line tax split' },
+  { token: '{{item_count}} {{qty_total}} {{qty_total3}}', desc: 'Counts (qty_total3 = 3-decimal)' },
+  { token: '{{#gst_summary}} {{rate}} {{half_rate}} {{taxable}} {{cgst}} {{sgst}} {{tax}} {{gross}} {{/gst_summary}}', desc: 'Rate-wise GST summary rows (5% / 12% / 18%)' },
+  { token: '{{gst_sum_taxable}} {{gst_sum_cgst}} {{gst_sum_sgst}} {{gst_sum_tax}}', desc: 'GST summary total row' },
   { token: '{{subtotal}} {{item_discount}} {{bill_discount}} {{coupon}} {{coupon_value}}', desc: 'Discount block' },
   { token: '{{service_charge}} {{delivery_charge}} {{packaging_charge}} {{tip}}', desc: 'Extra charges' },
   { token: '{{taxable}} {{cgst}} {{sgst}} {{gst_total}} {{round_off}}', desc: 'Tax block' },
@@ -466,19 +591,26 @@ export const TEMPLATE_TOKENS: { token: string; desc: string }[] = [
 ];
 
 /* sample sale used for template previews */
-export function sampleSale(): Sale {
-  const line = (name: string, qty: number, price: number, gst: number) => ({
+export function sampleSale(kind: 'grocery' | 'sweets' = 'grocery'): Sale {
+  const line = (name: string, qty: number, price: number, gst: number, unit = 'pc', hsn = '') => ({
     id: Math.random().toString(36).slice(2), productId: 'x', name, qty, price, basePrice: price,
-    cost: price * 0.7, gst, unit: 'pc', discount: 0,
+    cost: price * 0.7, gst, unit, discount: 0, ...(hsn ? { hsn } : {}),
   });
-  const lines = [line('Basmati Rice 1kg', 2, 115, 5), line('Sunflower Oil 1L', 1, 149, 5), line('Tea Powder 500g', 1, 260, 5)];
+  const lines = kind === 'sweets'
+    ? [line('Kaju Katli', 0.5, 960, 5, 'kg', '2106'), line('Motichoor Laddu', 1.25, 440, 5, 'kg', '2106'),
+       line('Aloo Bhujia Namkeen', 0.25, 360, 12, 'kg', '2106'), line('Gift Box (Large)', 1, 40, 18, 'pc', '4819')]
+    : [line('Basmati Rice 1kg', 2, 115, 5), line('Sunflower Oil 1L', 1, 149, 5), line('Tea Powder 500g', 1, 260, 5)];
   const sub = lines.reduce((t, l) => t + l.price * l.qty, 0);
-  const gstAmt = lines.reduce((t, l) => t + (l.price * l.qty * l.gst) / (100 + l.gst), 0);
+  const ratio = (sub - 20) / sub;
+  const gstAmt = lines.reduce((t, l) => t + (l.price * l.qty * ratio * l.gst) / (100 + l.gst), 0);
+  const total = Math.round(sub - 20);
+  const tendered = Math.ceil(total / 100) * 100 + (kind === 'sweets' ? 100 : 0);
   return {
     id: 'sample', invoiceNo: 'INV-00042', ts: Date.now(), lines, subTotal: sub, itemDiscount: 0,
-    billDiscount: 20, couponValue: 0, taxable: sub - gstAmt, gstAmount: +gstAmt.toFixed(2),
-    roundOff: 0.4, total: Math.round(sub - 20), profit: 120, payMode: 'upi', tendered: 700,
-    change: 700 - Math.round(sub - 20), customerName: 'Aarav Sharma', staffName: 'Cashier 1',
+    billDiscount: 20, couponValue: 0, taxable: sub - 20 - gstAmt, gstAmount: +gstAmt.toFixed(2),
+    roundOff: +(total - (sub - 20)).toFixed(2), total, profit: 120, payMode: kind === 'sweets' ? 'cash' : 'upi', tendered,
+    change: tendered - total, customerName: 'Aarav Sharma', staffName: 'Cashier 1',
     status: 'completed', pointsEarned: 6, channel: 'counter',
+    ...(kind === 'sweets' ? { packagingCharge: 0, meta: { token: 42, boxType: 'Gift box' } } : {}),
   } as Sale;
 }

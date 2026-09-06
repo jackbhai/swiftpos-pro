@@ -90,6 +90,7 @@ function StoreTab() {
         <Field label="PAN"><Input value={s.panNo} onChange={(e) => s.set({ panNo: e.target.value })} /></Field>
         <Field label="FSSAI licence"><Input value={s.fssai} onChange={(e) => s.set({ fssai: e.target.value })} /></Field>
         <Field label="Drug licence (pharmacy)"><Input value={s.drugLicense} onChange={(e) => s.set({ drugLicense: e.target.value })} /></Field>
+        <Field label="CIN (company registration)" hint="Pvt Ltd / LLP shops — printed by the Mithai / Halwai template"><Input value={s.cinNo ?? ''} placeholder="U15490RJ2015PTC047123" onChange={(e) => s.set({ cinNo: e.target.value.toUpperCase() })} /></Field>
       </Card>
       <Card>
         <SectionTitle title="Logo & signature" sub="Used by A4 templates. Keep files small (< 400 KB)." />
@@ -355,7 +356,7 @@ function AboutTab() {
     <Card className="space-y-3">
       <SectionTitle title="SwiftPOS Pro v7.1" sub="Offline-first point of sale for any business" right={<Info size={16} className="text-ink3" />} />
       <div className="grid gap-2 sm:grid-cols-3">
-        {[['Shop profile', `${profile.emoji} ${profile.label}`], ['Theme', s.theme], ['Templates', '20 built-in + custom'],
+        {[['Shop profile', `${profile.emoji} ${profile.label}`], ['Theme', s.theme], ['Templates', '21 built-in + custom'],
           ['Storage', 'IndexedDB (offline)'], ['Stack', 'React · TS · Vite · Dexie'], ['Licence', 'MIT']].map(([k, v]) => (
           <div key={k} className="rounded-xl border border-line bg-surface2/50 px-3 py-2">
             <p className="text-[10px] uppercase tracking-wider text-ink3">{k}</p>
