@@ -1,5 +1,5 @@
 /* SwiftPOS Pro service worker — ultra offline-first shell caching with background refresh. */
-const VERSION = 'swiftpos-v14-2';
+const VERSION = 'swiftpos-v14-3';
 const CORE = [
   './',
   './index.html',
