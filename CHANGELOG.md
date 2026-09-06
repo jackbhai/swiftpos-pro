@@ -2,6 +2,12 @@
 
 All notable changes to SwiftPOS Pro. Dates are IST.
 
+## [Unreleased] · Bill photo se template
+### Added
+- **Bill photo → template cloner** — kisi bhi bill ki photo upload karo, header/footer ka hissa slider se chuno, aur same-to-same template taiyaar. Header/footer original photo pixels hote hain, beech me bill no, items aur total har bill par badalte hain. 100% offline, rotate + black-&-white thermal mode + live preview ke saath. (Settings → Templates → "Bill photo se banao")
+- **4-side trim** — photo me upar/neeche/baen/dayen aaya table, device ya ungli kaato; kaata hissa bachat me photo jaisa saaf print aata hai.
+- **Bill OCR (photo se naam-pata)** — "Text padho" dabao to bill par chhapa dukaan ka naam, tagline, address, phone, GSTIN, FSSAI, CIN, email aur website apne aap padhkar settings me bhar jaata hai. tesseract.js lazy-load hota hai (normal app size same), pehli baar ~2MB model download, phir offline. OCR-noise-tolerant parser: GSTIN me O→0 sudhaar, "www. site" spacing fix, "CGST@2.5" jaisa mail-trap reject.
+
 ## [14.1.0] — 2026-09-06 · Shop-wise catalogues, sweets shop, weight picker
 ### Added
 - **Sweets / Mithai shop type + business system** — per-kg mithai billing, festival boxes, short shelf-life. Restaurant RMS remains its own system.

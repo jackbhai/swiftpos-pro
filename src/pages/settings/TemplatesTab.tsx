@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Printer, Upload, Plus, Trash2, Copy, Download, Check, Eye, Code2, Star, Pencil, FileCode2,
+  Printer, Upload, Plus, Trash2, Copy, Download, Check, Eye, Code2, Star, Pencil, FileCode2, Camera,
 } from 'lucide-react';
 import { Card, SectionTitle, Field, Input, Select, Textarea, Modal, Badge, Empty, Tabs, Toggle } from '@/components/ui';
+import CloneTemplateModal from './CloneTemplateModal';
 import { useSettings } from '@/store/settings';
 import { db, uid } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -18,6 +19,7 @@ export default function TemplatesTab() {
   const custom = useLiveQuery(() => db.templates.toArray(), [], [] as any[]) || [];
   const [group, setGroup] = useState('All');
   const [preview, setPreview] = useState<TemplateDef | null>(null);
+  const [cloneOpen, setCloneOpen] = useState(false);
   const [editor, setEditor] = useState<{ id?: string; name: string; paper: string; desc: string; html: string } | null>(null);
   const [qr, setQr] = useState('');
 
@@ -78,7 +80,8 @@ export default function TemplatesTab() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Tabs active={group} onChange={setGroup} tabs={groups.map((g) => ({ id: g, label: g, count: g === 'All' ? all.length : all.filter((t) => t.group === g).length }))} />
-          <label className="btn-soft ml-auto cursor-pointer">
+          <button className="btn-soft ml-auto" onClick={() => setCloneOpen(true)}><Camera size={15} /> Bill photo se banao</button>
+          <label className="btn-soft cursor-pointer">
             <Upload size={15} /> Upload .html
             <input type="file" accept=".html,.htm,.txt" hidden onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
           </label>
@@ -131,6 +134,8 @@ export default function TemplatesTab() {
           ))}
         </div>
       </Card>
+
+      <CloneTemplateModal open={cloneOpen} onClose={() => setCloneOpen(false)} />
 
       <Modal open={!!preview} onClose={() => setPreview(null)} wide title={preview?.name}
         footer={preview && <div className="flex gap-2">
