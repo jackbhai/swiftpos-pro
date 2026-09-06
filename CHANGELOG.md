@@ -2,6 +2,10 @@
 
 All notable changes to SwiftPOS Pro. Dates are IST.
 
+## [Unreleased] · Bill photo se template
+### Added
+- **Bill photo → template cloner** — kisi bhi bill ki photo upload karo, header/footer ka hissa slider se chuno, aur same-to-same template taiyaar. Header/footer original photo pixels hote hain, beech me bill no, items aur total har bill par badalte hain. 100% offline, rotate + black-&-white thermal mode + live preview ke saath. (Settings → Templates → "Bill photo se banao")
+
 ## [14.1.0] — 2026-09-06 · Shop-wise catalogues, sweets shop, weight picker
 ### Added
 - **Sweets / Mithai shop type + business system** — per-kg mithai billing, festival boxes, short shelf-life. Restaurant RMS remains its own system.
