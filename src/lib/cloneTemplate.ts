@@ -115,12 +115,17 @@ export interface CropOpts {
   rotation: 0 | 90 | 180 | 270;
   headerPct: number;      // 5..70 — top slice kept as header
   footerPct: number;      // 5..70 — bottom slice kept as footer
+  trimTopPct?: number;    // 0..40 — junk above the bill (table, device…) cut away first
+  trimBottomPct?: number; // 0..40 — junk below the bill (fingers, table…) cut away first
+  trimLeftPct?: number;   // 0..25 — left table/background edge
+  trimRightPct?: number;  // 0..25 — right table/background edge
   bw: boolean;            // grayscale + contrast (thermal-printer friendly)
   maxWidth: number;       // px — slices are resized to this width
   quality: number;        // jpeg quality 0..1
 }
 
-function drawRotated(img: HTMLImageElement, rotation: number): HTMLCanvasElement {
+/** Rotate an image onto a white canvas (exported for OCR prep reuse). */
+export function rotateCanvas(img: HTMLImageElement, rotation: number): HTMLCanvasElement {
   const swap = rotation === 90 || rotation === 270;
   const c = document.createElement('canvas');
   c.width = swap ? img.height : img.width;
@@ -148,30 +153,40 @@ function toBw(src: HTMLCanvasElement) {
   ctx.putImageData(d, 0, 0);
 }
 
-function slice(src: HTMLCanvasElement, y0: number, y1: number, o: CropOpts): string {
+function slice(src: HTMLCanvasElement, x0: number, x1: number, y0: number, y1: number, o: CropOpts): string {
+  const w = Math.max(8, Math.round(x1 - x0));
   const h = Math.max(8, Math.round(y1 - y0));
-  const scale = Math.min(1, o.maxWidth / src.width);
+  const scale = Math.min(1, o.maxWidth / w);
   const c = document.createElement('canvas');
-  c.width = Math.max(8, Math.round(src.width * scale));
+  c.width = Math.max(8, Math.round(w * scale));
   c.height = Math.max(8, Math.round(h * scale));
   const ctx = c.getContext('2d')!;
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, c.width, c.height);
-  ctx.drawImage(src, 0, y0, src.width, h, 0, 0, c.width, c.height);
+  ctx.drawImage(src, x0, y0, w, h, 0, 0, c.width, c.height);
   if (o.bw) toBw(c);
   return c.toDataURL('image/jpeg', o.quality);
 }
 
 export interface CropResult { header: string; footer: string; width: number; height: number }
 
-/** Rotate → slice header/footer → (optional) B&W → compress. */
+/** Rotate → trim junk → slice header/footer → (optional) B&W → compress. */
 export async function cropBillPhoto(src: string, o: CropOpts): Promise<CropResult> {
   const img = await loadImage(src);
-  const full = drawRotated(img, o.rotation);
+  const full = rotateCanvas(img, o.rotation);
+  const tt = Math.min(45, Math.max(0, o.trimTopPct ?? 0)) / 100;
+  const tb = Math.min(45, Math.max(0, o.trimBottomPct ?? 0)) / 100;
+  const tl = Math.min(30, Math.max(0, o.trimLeftPct ?? 0)) / 100;
+  const tr = Math.min(30, Math.max(0, o.trimRightPct ?? 0)) / 100;
+  const y0 = full.height * tt;
+  const y1 = full.height * (1 - tb);
+  const x0 = full.width * tl;
+  const x1 = full.width * (1 - tr);
+  const workH = Math.max(16, y1 - y0);
   const hp = Math.min(70, Math.max(0, o.headerPct)) / 100;
   const fp = Math.min(70, Math.max(0, o.footerPct)) / 100;
-  const header = hp > 0 ? slice(full, 0, full.height * hp, o) : '';
-  const footer = fp > 0 ? slice(full, full.height * (1 - fp), full.height, o) : '';
+  const header = hp > 0 ? slice(full, x0, x1, y0, y0 + workH * hp, o) : '';
+  const footer = fp > 0 ? slice(full, x0, x1, y1 - workH * fp, y1, o) : '';
   return { header, footer, width: full.width, height: full.height };
 }
 

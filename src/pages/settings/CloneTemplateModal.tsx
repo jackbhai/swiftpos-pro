@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Camera, RotateCw, RotateCcw, ArrowLeft, ArrowRight, Check, RefreshCw, ImagePlus,
+  Camera, RotateCw, RotateCcw, ArrowLeft, ArrowRight, Check, RefreshCw, ImagePlus, ScanText, X,
 } from 'lucide-react';
 import { Field, Input, Select, Modal, Toggle, Badge } from '@/components/ui';
 import { useSettings } from '@/store/settings';
@@ -13,6 +13,9 @@ import { cx } from '@/lib/format';
 import {
   buildClonedTemplate, cropBillPhoto, dataUrlKB, fileToDataUrl,
 } from '@/lib/cloneTemplate';
+import {
+  prepareOcrImage, recognizeBillText, parseBillDetails, parsedToSettings, type ParsedBill,
+} from '@/lib/billOcr';
 
 const PAPER_W = { '58mm': 384, '80mm': 576, A4: 820 } as const;
 
@@ -23,7 +26,13 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [headerPct, setHeaderPct] = useState(26);
   const [footerPct, setFooterPct] = useState(16);
+  const [trimTop, setTrimTop] = useState(0);
+  const [trimBottom, setTrimBottom] = useState(0);
+  const [trimLeft, setTrimLeft] = useState(0);
+  const [trimRight, setTrimRight] = useState(0);
   const [bw, setBw] = useState(true);
+  const [ocr, setOcr] = useState<{ status: 'idle' | 'reading' | 'done' | 'error'; progress: number; note: string; parsed: ParsedBill | null; error: string }>(
+    { status: 'idle', progress: 0, note: '', parsed: null, error: '' });
   const [crops, setCrops] = useState({ header: '', footer: '' });
   const [working, setWorking] = useState(false);
   const [paper, setPaper] = useState<'58mm' | '80mm' | 'A4'>('80mm');
@@ -53,7 +62,8 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
     setWorking(true);
     const t = setTimeout(() => {
       cropBillPhoto(photo, {
-        rotation, headerPct, footerPct, bw,
+        rotation, headerPct, footerPct,
+        trimTopPct: trimTop, trimBottomPct: trimBottom, trimLeftPct: trimLeft, trimRightPct: trimRight, bw,
         maxWidth: PAPER_W[paper], quality: 0.72,
       })
         .then((r) => setCrops({ header: r.header, footer: r.footer }))
@@ -61,7 +71,7 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
         .finally(() => setWorking(false));
     }, 220);
     return () => clearTimeout(t);
-  }, [photo, rotation, headerPct, footerPct, bw, paper]);
+  }, [photo, rotation, headerPct, footerPct, trimTop, trimBottom, trimLeft, trimRight, bw, paper]);
 
   const finalHtml = useMemo(() => buildClonedTemplate({
     paper, headerImg: crops.header, footerImg: crops.footer,
@@ -88,6 +98,38 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
 
   const reset = () => {
     setStep(0); setPhoto(''); setRotation(0); setCrops({ header: '', footer: '' });
+    setTrimTop(0); setTrimBottom(0); setTrimLeft(0); setTrimRight(0);
+    setOcr({ status: 'idle', progress: 0, note: '', parsed: null, error: '' });
+  };
+
+  const runOcr = async () => {
+    if (!photo || ocr.status === 'reading') return;
+    setOcr({ status: 'reading', progress: 0, note: 'Photo taiyaar…', parsed: null, error: '' });
+    try {
+      const prepped = await prepareOcrImage(photo, rotation);
+      const text = await recognizeBillText(prepped, (p, note) =>
+        setOcr((o) => ({ ...o, progress: p, note })));
+      const parsed = parseBillDetails(text);
+      const found = parsed.shopName || parsed.address || parsed.gstin || parsed.phones.length;
+      if (!found) {
+        setOcr({ status: 'error', progress: 0, note: '', parsed: null, error: 'Text saaf padha nahi gaya — seedhi, ujli photo try karein' });
+        return;
+      }
+      setOcr({ status: 'done', progress: 1, note: '', parsed, error: '' });
+    } catch (e: any) {
+      const offline = !navigator.onLine;
+      setOcr({
+        status: 'error', progress: 0, note: '', parsed: null,
+        error: offline ? 'Internet chahiye — pehli baar 2MB model download hota hai, phir offline chalega'
+          : ('OCR fail: ' + (e?.message || 'dobara try karein')),
+      });
+    }
+  };
+
+  const applyOcr = () => {
+    if (!ocr.parsed) return;
+    s.set(parsedToSettings(ocr.parsed) as any);
+    toast('Dukaan ka naam-pata settings me bhar diya ✓');
   };
 
   const save = async () => {
@@ -157,16 +199,31 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
               <img src={photo} alt="bill"
                 style={{ transform: `rotate(${rotation}deg)`, maxHeight: '46vh' }}
                 className="block w-auto transition-transform" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2 border-emerald-400 bg-emerald-400/25" style={{ height: `${headerPct}%` }}>
-                <span className="absolute left-1 top-1 rounded bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold text-black">HEADER — photo jaisa</span>
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 border-t-2 border-sky-400 bg-sky-400/25" style={{ height: `${footerPct}%` }}>
-                <span className="absolute bottom-1 left-1 rounded bg-sky-400 px-1.5 py-0.5 text-[10px] font-bold text-black">FOOTER — photo jaisa</span>
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center border-y border-dashed border-amber-300/70 bg-amber-300/10"
-                style={{ top: `${headerPct}%`, bottom: `${footerPct}%` }}>
-                <span className="rounded bg-amber-300 px-1.5 py-0.5 text-[10px] font-bold text-black">ITEMS + TOTAL — har bill par badlega</span>
-              </div>
+              {(() => {
+                const workH = Math.max(10, 100 - trimTop - trimBottom);
+                const hh = (headerPct / 100) * workH;
+                const fh = (footerPct / 100) * workH;
+                return (<>
+                  {trimTop > 0 && <div className="pointer-events-none absolute inset-x-0 top-0 bg-black/70" style={{ height: `${trimTop}%` }}>
+                    <span className="absolute left-1 top-1 rounded bg-zinc-500 px-1.5 py-0.5 text-[10px] font-bold text-white">✂ kata hua</span>
+                  </div>}
+                  {trimBottom > 0 && <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/70" style={{ height: `${trimBottom}%` }}>
+                    <span className="absolute bottom-1 left-1 rounded bg-zinc-500 px-1.5 py-0.5 text-[10px] font-bold text-white">✂ kata hua</span>
+                  </div>}
+                  {trimLeft > 0 && <div className="pointer-events-none absolute inset-y-0 left-0 bg-black/70" style={{ width: `${trimLeft}%` }} />}
+                  {trimRight > 0 && <div className="pointer-events-none absolute inset-y-0 right-0 bg-black/70" style={{ width: `${trimRight}%` }} />}
+                  <div className="pointer-events-none absolute inset-x-0 border-b-2 border-emerald-400 bg-emerald-400/25" style={{ top: `${trimTop}%`, height: `${hh}%` }}>
+                    <span className="absolute left-1 top-1 rounded bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold text-black">HEADER — photo jaisa</span>
+                  </div>
+                  <div className="pointer-events-none absolute inset-x-0 border-t-2 border-sky-400 bg-sky-400/25" style={{ bottom: `${trimBottom}%`, height: `${fh}%` }}>
+                    <span className="absolute bottom-1 left-1 rounded bg-sky-400 px-1.5 py-0.5 text-[10px] font-bold text-black">FOOTER — photo jaisa</span>
+                  </div>
+                  <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center border-y border-dashed border-amber-300/70 bg-amber-300/10"
+                    style={{ top: `${trimTop + hh}%`, bottom: `${trimBottom + fh}%` }}>
+                    <span className="rounded bg-amber-300 px-1.5 py-0.5 text-[10px] font-bold text-black">ITEMS + TOTAL — har bill par badlega</span>
+                  </div>
+                </>);
+              })()}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="chip" onClick={() => setRotation(((rotation + 270) % 360) as any)}><RotateCcw size={12} className="mr-1 inline" />Left</button>
@@ -183,6 +240,20 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
             <Field label={`Footer — neeche se ${footerPct}%`} hint="Dhanyavaad, terms, sign — photo wala hissa">
               <input type="range" min={0} max={60} value={footerPct} onChange={(e) => setFooterPct(+e.target.value)} className="w-full accent-sky-400" />
             </Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label={`✂ Upar se kaato ${trimTop}%`} hint="Bill ke upar table/device dikhe to">
+                <input type="range" min={0} max={40} value={trimTop} onChange={(e) => setTrimTop(+e.target.value)} className="w-full accent-zinc-400" />
+              </Field>
+              <Field label={`✂ Neeche se kaato ${trimBottom}%`} hint="Ungli/table aaya ho to">
+                <input type="range" min={0} max={40} value={trimBottom} onChange={(e) => setTrimBottom(+e.target.value)} className="w-full accent-zinc-400" />
+              </Field>
+              <Field label={`✂ Baen kinari ${trimLeft}%`} hint="Side me table dikhe to">
+                <input type="range" min={0} max={25} value={trimLeft} onChange={(e) => setTrimLeft(+e.target.value)} className="w-full accent-zinc-400" />
+              </Field>
+              <Field label={`✂ Dayen kinari ${trimRight}%`} hint="Side me table dikhe to">
+                <input type="range" min={0} max={25} value={trimRight} onChange={(e) => setTrimRight(+e.target.value)} className="w-full accent-zinc-400" />
+              </Field>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Paper size">
                 <Select value={paper} onChange={(e) => setPaper(e.target.value as any)}>
@@ -214,6 +285,45 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
                 </div>
               </div>
             </div>
+          </div>
+          <div className="rounded-xl border border-line bg-surface2/40 p-3 lg:col-span-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-bold text-ink">📝 Photo se naam-pata padho <span className="font-normal text-ink3">(OCR)</span></p>
+              {ocr.status === 'idle' && <>
+                <button className="btn-primary ml-auto !py-1.5 text-xs" onClick={runOcr}><ScanText size={14} /> Text padho</button>
+              </>}
+              {ocr.status === 'reading' && <Badge tone="brand" className="ml-auto">padh rahe hain…</Badge>}
+              {(ocr.status === 'done' || ocr.status === 'error') && <>
+                <button className="chip ml-auto" onClick={runOcr}><ScanText size={12} className="mr-1 inline" />Dobara padho</button>
+                <button className="chip" onClick={() => setOcr({ status: 'idle', progress: 0, note: '', parsed: null, error: '' })}><X size={12} /></button>
+              </>}
+            </div>
+            {ocr.status === 'idle' && <p className="mt-1 text-[11px] text-ink3">Bill par chhapa dukaan ka naam, address, phone, GSTIN, FSSAI apne aap padhkar settings me bhar dega. Pehli baar ~2MB model download hoga (internet), phir offline chalega.</p>}
+            {ocr.status === 'reading' && (
+              <div className="mt-2">
+                <div className="h-2 overflow-hidden rounded-full bg-surface3">
+                  <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${Math.round(ocr.progress * 100)}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] text-ink3">{ocr.note} {Math.round(ocr.progress * 100)}%</p>
+              </div>
+            )}
+            {ocr.status === 'error' && <p className="mt-2 rounded-lg bg-bad/10 p-2 text-[11px] text-bad">⚠️ {ocr.error}</p>}
+            {ocr.status === 'done' && ocr.parsed && (
+              <div className="mt-2 space-y-2">
+                <div className="grid gap-1.5 text-[11px] sm:grid-cols-2">
+                  {ocr.parsed.shopName && <Row k="Dukaan" v={ocr.parsed.shopName} />}
+                  {ocr.parsed.tagline && <Row k="Tagline" v={ocr.parsed.tagline} />}
+                  {ocr.parsed.address && <Row k="Address" v={ocr.parsed.address} />}
+                  {ocr.parsed.phones.map((p, i) => <Row key={p} k={i === 0 ? 'Phone' : 'Phone 2'} v={p} />)}
+                  {ocr.parsed.gstin && <Row k="GSTIN" v={ocr.parsed.gstin} />}
+                  {ocr.parsed.fssai && <Row k="FSSAI" v={ocr.parsed.fssai} />}
+                  {ocr.parsed.cin && <Row k="CIN" v={ocr.parsed.cin} />}
+                  {ocr.parsed.email && <Row k="Email" v={ocr.parsed.email} />}
+                  {ocr.parsed.website && <Row k="Website" v={ocr.parsed.website} />}
+                </div>
+                <button className="btn-primary w-full" onClick={applyOcr}><Check size={15} /> Ye details settings me save karo</button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -257,3 +367,10 @@ export default function CloneTemplateModal({ open, onClose }: { open: boolean; o
     </Modal>
   );
 }
+
+const Row = ({ k, v }: { k: string; v: string }) => (
+  <div className="flex gap-2 rounded-lg border border-line bg-surface px-2 py-1.5">
+    <span className="shrink-0 font-bold text-ink3">{k}:</span>
+    <span className="break-all font-semibold text-ink">{v}</span>
+  </div>
+);
