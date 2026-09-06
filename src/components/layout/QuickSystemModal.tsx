@@ -1,5 +1,5 @@
 import React from 'react';
-import { SYSTEMS, getSystem } from '@/lib/systems';
+import { SYSTEMS, getSystem, systemsForPicker } from '@/lib/systems';
 import { useSettings, useShop } from '@/store/settings';
 import { Modal, Badge } from '@/components/ui';
 import { cx } from '@/lib/format';
@@ -25,14 +25,14 @@ export default function QuickSystemModal({ open, onClose }: { open: boolean; onC
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Switch Business Edition (10 Systems)" wide>
+    <Modal open={open} onClose={onClose} title={`Switch Business Edition (${SYSTEMS.length} Systems)`} wide>
       <div className="space-y-4">
         <p className="text-xs text-ink3">
           Select any business system below. The whole POS interface, billing fields, receipts, navigation screens, and terminology will dynamically transform for that industry.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {SYSTEMS.map((sys) => {
+          {systemsForPicker().map((sys) => {
             const active = system.id === sys.id;
             return (
               <div

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Boxes, Check, Sparkles, ListChecks, Workflow, Layers, ArrowRight } from 'lucide-react';
-import { SYSTEMS, getSystem, type CapKey } from '@/lib/systems';
+import { SYSTEMS, getSystem, systemsForPicker, type CapKey } from '@/lib/systems';
 import { useSettings, useShop } from '@/store/settings';
 import { NAV } from '@/components/layout/nav';
 import { Card, Stat, Badge, Toggle, SectionTitle, Tabs, Modal } from '@/components/ui';
@@ -19,7 +19,7 @@ const CAP_LABEL: Record<string, string> = {
   recipes: 'Recipe / BOM', production: 'Production batches', subscriptions: 'Subscriptions', loyalty: 'Loyalty points',
 };
 
-/** Business systems — 10 complete, ready-made setups. Pick one and the whole app changes. */
+/** Business systems — ready-made setups. Pick one and the whole app changes. */
 export default function Systems() {
   const s = useSettings();
   const { system, capList } = useShop();
@@ -45,7 +45,7 @@ export default function Systems() {
       </div>
 
       <Card>
-        <SectionTitle title="Business systems" sub="Ek app, 10 poore systems — jo chuniye, UI aur features usi business ke hisaab se ho jate hain" />
+        <SectionTitle title="Business systems" sub={`Ek app, ${SYSTEMS.length} poore systems — jo chuniye, UI aur features usi business ke hisaab se ho jate hain`} />
         <Tabs active={tab} onChange={(t) => setTab(t as any)} tabs={[
           { id: 'systems', label: 'Choose system', count: SYSTEMS.length },
           { id: 'modules', label: 'Fine-tune modules', count: capList.size },
@@ -54,7 +54,7 @@ export default function Systems() {
 
       {tab === 'systems' && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {SYSTEMS.map((sys) => {
+          {systemsForPicker().map((sys) => {
             const active = system.id === sys.id;
             return (
               <Card key={sys.id} className={cx(active && 'border-brand ring-1 ring-brand')}>

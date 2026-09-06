@@ -10,7 +10,8 @@ import { VirtualList } from '@/components/ui/Virtual';
 import { db, uid, addStockLog, logActivity } from '@/db/db';
 import { money, moneyShort, num, cx, dt } from '@/lib/format';
 import { stockState, expiryState, fuzzyScore } from '@/lib/calc';
-import { downloadCSV } from '@/lib/csv';
+import { downloadCSV, download } from '@/lib/csv';
+import { exportCatalog } from '@/lib/shopFormats';
 import { Card, Stat, Modal, Field, Input, Select, Empty, SearchBar, Badge, Tabs, Toggle, ConfirmBtn } from '@/components/ui';
 import { useSettings, useShop } from '@/store/settings';
 import { toast, toastUndo } from '@/store/ui';
@@ -109,6 +110,12 @@ export default function Inventory() {
     stock_value: +(p.cost * p.stock).toFixed(2),
   })));
 
+  const exportJson = () => {
+    const payload = exportCatalog(filtered, { systemId: s.systemId, shopType: s.shopType, shopName: s.shopName });
+    download(`inventory-${s.systemId}-${Date.now()}.json`, JSON.stringify(payload, null, 2), 'application/json');
+    toast(`JSON exported · ${s.systemId} format`);
+  };
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -125,6 +132,7 @@ export default function Inventory() {
           <button className="btn-soft" onClick={() => setScannerOpen(true)} title="Scan product box with camera to auto-intake"><Camera size={15} /> Camera Intake</button>
           <Link className="btn-ghost" to="/settings?tab=json"><Upload size={15} /> Import</Link>
           <button className="btn-ghost" onClick={exportAll}><Download size={15} /> CSV</button>
+          <button className="btn-ghost" onClick={exportJson}><Download size={15} /> JSON</button>
           <button className="btn-ghost" onClick={() => setLogsOpen(true)}><ArrowUpDown size={15} /> Stock log</button>
           <button className="btn-ghost px-3" onClick={() => setView(view === 'list' ? 'grid' : 'list')}>{view === 'list' ? <Grid3x3 size={15} /> : <List size={15} />}</button>
         </div>
@@ -326,6 +334,12 @@ function ProductEditor({ product, onClose, onSave, vendors, modules, terms }: an
               {[...new Set([...profile.units, 'pc', 'kg', 'g', 'l', 'ml', 'box', 'pack', 'dozen'])].map((u) => <option key={u} value={u}>{u}</option>)}
             </Select>
           </Field>
+          {['kg', 'g', 'l', 'ml'].includes(String(f.unit)) && (
+            <div className="sm:col-span-2 rounded-xl border border-brand/30 bg-brand/5 p-3 text-[11px] text-ink2">
+              <p className="font-bold text-ink">POS weight packs</p>
+              Kirana aur sweets billing par 250 gram / 500 gram / 750 gram / 1 kg (ya ml / liter) ke buttons aaenge. Custom wazan bhi type ho sakta hai.
+            </div>
+          )}
           <Field label="HSN / SAC"><Input value={f.hsn ?? ''} onChange={(e) => up('hsn', e.target.value)} /></Field>
           <Field label={terms.vendor}>
             <Select value={f.vendorId ?? ''} onChange={(e) => up('vendorId', e.target.value)}>

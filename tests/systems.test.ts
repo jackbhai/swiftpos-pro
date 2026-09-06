@@ -1,10 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { SYSTEMS, getSystem, screenAllowed } from '../src/lib/systems';
+import { SYSTEMS, getSystem, screenAllowed, systemsForPicker } from '../src/lib/systems';
 import { SHOP_PROFILES, getProfile } from '../src/lib/shopProfiles';
 
 describe('business systems', () => {
-  it('ships exactly ten complete systems', () => {
-    expect(SYSTEMS.length).toBe(10);
+  it('ships a complete set of business systems including sweets', () => {
+    expect(SYSTEMS.length).toBeGreaterThanOrEqual(11);
+    expect(SYSTEMS.map((s) => s.id)).toContain('sweets');
+    expect(SYSTEMS.map((s) => s.id)).toContain('rms');
+    expect(SHOP_PROFILES.map((p) => p.id)).toContain('sweets');
+  });
+
+  it('puts Sweets / Mithai near the top of the picker, separate from Bakery', () => {
+    const picker = systemsForPicker();
+    expect(picker.find((s) => s.id === 'sweets')?.short).toMatch(/Mithai/i);
+    expect(picker.findIndex((s) => s.id === 'sweets')).toBeLessThan(3);
+    expect(picker.find((s) => s.id === 'bakery')?.label).not.toMatch(/Sweet Shop/i);
   });
 
   it('has unique ids and labels', () => {
@@ -53,6 +63,8 @@ describe('business systems', () => {
     expect(getSystem('electronics').capture.find((f) => f.key === 'imei')?.required).toBe(true);
     expect(getSystem('garage').capture.find((f) => f.key === 'vehicleNo')?.required).toBe(true);
     expect(getSystem('cafe').capture.some((f) => f.key === 'token')).toBe(true);
+    expect(getSystem('sweets').caps).toContain('weighScale');
+    expect(getSystem('sweets').base).toBe('sweets');
   });
 
   it('falls back to the first system for an unknown id', () => {

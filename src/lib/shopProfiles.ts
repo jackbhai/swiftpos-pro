@@ -2,7 +2,7 @@
  *  Each profile re-labels the UI, toggles modules and seeds sensible defaults. */
 
 export type ShopTypeId =
-  | 'grocery' | 'pharmacy' | 'restaurant' | 'cafe' | 'bakery' | 'retail'
+  | 'grocery' | 'pharmacy' | 'restaurant' | 'cafe' | 'bakery' | 'sweets' | 'retail'
   | 'electronics' | 'fashion' | 'salon' | 'hardware' | 'stationery' | 'general';
 
 export interface ShopProfile {
@@ -81,12 +81,21 @@ export const SHOP_PROFILES: ShopProfile[] = [
     quickCash: [50, 100, 200, 500], posLayout: 'grid', accent: 'violet',
   },
   {
-    id: 'bakery', label: 'Bakery / Sweet Shop', emoji: '🧁',
+    id: 'bakery', label: 'Bakery / Cake Shop', emoji: '🧁',
     blurb: 'Weight based billing, same-day expiry, custom cake orders.',
     terms: { product: 'Item', products: 'Items', category: 'Category', sale: 'Bill', sales: 'Bills', customer: 'Customer', customers: 'Customers', stock: 'Stock', vendor: 'Supplier' },
     modules: base({ weighScale: true, batchExpiry: true, variants: true }),
     defaultGst: 5, units: ['kg', 'g', 'pc', 'box', 'dozen'],
     categories: ['Cakes', 'Pastries', 'Cookies', 'Breads', 'Sweets', 'Namkeen', 'Chocolates'],
+    quickCash: [50, 100, 200, 500, 1000], posLayout: 'grid', accent: 'rose',
+  },
+  {
+    id: 'sweets', label: 'Sweets / Mithai Shop', emoji: '🍬',
+    blurb: 'Per-kg mithai billing, 250g–1kg packs, festival boxes and short shelf-life.',
+    terms: { product: 'Mithai', products: 'Mithai', category: 'Variety', sale: 'Bill', sales: 'Bills', customer: 'Customer', customers: 'Customers', stock: 'Stock', vendor: 'Supplier' },
+    modules: base({ weighScale: true, batchExpiry: true, variants: true }),
+    defaultGst: 5, units: ['kg', 'g', 'pc', 'box', 'tray', 'dozen'],
+    categories: ['Milk Sweets', 'Dry Fruit', 'Bengali', 'Namkeen', 'Chikki', 'Festival Boxes', 'Sugar Free', 'Savoury'],
     quickCash: [50, 100, 200, 500, 1000], posLayout: 'grid', accent: 'rose',
   },
   {

@@ -6,7 +6,7 @@ export interface Product {
   sku: string;
   barcode?: string;
   category: string;
-  unit: 'pc' | 'kg' | 'g' | 'l' | 'ml' | 'box' | 'pack' | 'dozen';
+  unit: string;
   cost: number;
   price: number;
   mrp?: number;

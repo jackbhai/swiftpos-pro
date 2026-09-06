@@ -8,6 +8,10 @@ import type { Product, Customer, Vendor } from '@/db/types';
 import { useSettings } from '@/store/settings';
 import { importBackup } from './backup';
 import { parseCSV } from './csv';
+import {
+  CATALOG_UNWRAP_KEYS, detectCatalogFormat, enrichProductFromFormat, getCatalogFormat,
+  normalizeUnit, type ShopCatalogFormat,
+} from './shopFormats';
 
 export type ImportKind = 'backup' | 'products' | 'customers' | 'vendors' | 'unknown';
 
@@ -40,8 +44,15 @@ const numOf = (v: any, d = 0) => {
 
 export function detectKind(data: any): ImportKind {
   if (data && typeof data === 'object' && !Array.isArray(data)) {
-    if (data.app === 'SwiftPOS Pro') return 'backup';
-    if (Array.isArray(data.products) || Array.isArray(data.inventory) || Array.isArray(data.items)) return 'products';
+    const catalog = detectCatalogFormat(data);
+    const fmt = String(data.format || data.catalog_format || '');
+    const isCatalog = !!catalog || /catalog|menu/i.test(fmt);
+    if (data.app === 'SwiftPOS Pro' && !isCatalog && (data.settings || data.sales || typeof data.version === 'number')) return 'backup';
+    if (isCatalog) return 'products';
+    if (Array.isArray(data.mithai) || Array.isArray(data.medicines) || Array.isArray(data.menu) ||
+        Array.isArray(data.dishes) || Array.isArray(data.articles) || Array.isArray(data.services) ||
+        Array.isArray(data.parts) || Array.isArray(data.products) || Array.isArray(data.inventory) ||
+        Array.isArray(data.items)) return 'products';
     if (Array.isArray(data.customers)) return 'customers';
     if (Array.isArray(data.vendors) || Array.isArray(data.suppliers)) return 'vendors';
     if (Array.isArray(data.data)) return detectKind(data.data);
@@ -51,8 +62,9 @@ export function detectKind(data: any): ImportKind {
   if (!row || typeof row !== 'object') return 'unknown';
   const keys = Object.keys(row).map((k) => k.toLowerCase().replace(/[\s_-]/g, ''));
   const has = (...c: string[]) => c.some((x) => keys.includes(x));
-  if (has('productname', 'itemname', 'name', 'product', 'medicinename', 'dish', 'sku', 'barcode') &&
-      has('priceperunit', 'price', 'mrp', 'sellingprice', 'rate', 'stockquantity', 'stock', 'qty')) return 'products';
+  if (has('productname', 'itemname', 'name', 'product', 'medicinename', 'dish', 'dishname', 'mithainame',
+      'servicename', 'articlename', 'partname', 'sku', 'barcode') &&
+      has('priceperunit', 'priceperkg', 'price', 'mrp', 'sellingprice', 'rate', 'stockquantity', 'stockkg', 'stock', 'qty')) return 'products';
   if (has('phone', 'mobile', 'contact') && has('name', 'customername')) return 'customers';
   if (has('vendorname', 'suppliername')) return 'vendors';
   return 'unknown';
@@ -60,41 +72,50 @@ export function detectKind(data: any): ImportKind {
 
 export function unwrap(data: any): any[] {
   if (Array.isArray(data)) return data;
-  for (const k of ['products', 'inventory', 'items', 'customers', 'vendors', 'suppliers', 'data', 'rows', 'records']) {
+  const catalog = detectCatalogFormat(data);
+  if (catalog && Array.isArray(data?.[catalog.wrapKey])) return data[catalog.wrapKey];
+  for (const k of CATALOG_UNWRAP_KEYS) {
     if (Array.isArray(data?.[k])) return data[k];
   }
   return [];
 }
 
-/** Map one arbitrary row to a SwiftPOS product. */
-export function mapProduct(row: any, o: ImportOptions, i: number): Product {
+/** Map one arbitrary row to a SwiftPOS product. Pass a shop format so field names match that trade. */
+export function mapProduct(row: any, o: ImportOptions, i: number, format?: ShopCatalogFormat): Product {
   const now = Date.now();
-  const name = String(pick(row, ['product_name', 'productname', 'item_name', 'name', 'title', 'medicine_name', 'dish', 'description']) ?? `Item ${i + 1}`).trim();
-  const price = numOf(pick(row, ['price_per_unit', 'selling_price', 'sale_price', 'price', 'rate', 'mrp', 'amount']), 0);
+  const name = String(pick(row, [
+    ...(format ? format.fields.filter((f) => f.required && /name|title|dish|medicine|service|article|part|mithai/i.test(f.key)).flatMap((f) => f.aliases) : []),
+    'product_name', 'productname', 'item_name', 'mithai_name', 'name', 'title',
+    'medicine_name', 'dish_name', 'dish', 'service_name', 'article_name', 'part_name', 'description',
+  ]) ?? `Item ${i + 1}`).trim();
+  const price = numOf(pick(row, [
+    'price_per_kg', 'price_per_unit', 'price_regular', 'full_price', 'selling_price', 'sale_price',
+    'price', 'rate', 'mrp', 'amount', 'price_per_pc',
+  ]), 0);
   const mrpRaw = numOf(pick(row, ['mrp', 'max_retail_price', 'list_price']), 0);
   const costRaw = numOf(pick(row, ['cost', 'cost_price', 'purchase_price', 'buy_price', 'wholesale_price']), 0);
   const cost = costRaw > 0 ? costRaw : +(price / (1 + o.defaultMarginPct / 100)).toFixed(2);
   const catField = o.categoryFrom === 'unit_type'
     ? pick(row, ['unit_type', 'sub_category', 'subcategory', 'type', 'category'])
-    : pick(row, ['category', 'category_name', 'dept', 'department', 'group', 'unit_type']);
-  const unitRaw = String(pick(row, ['unit', 'uom', 'measure']) ?? 'pc').toLowerCase();
-  const unit = (['pc', 'kg', 'g', 'l', 'ml', 'box', 'pack', 'dozen'] as const).find((u) => unitRaw.startsWith(u)) ?? 'pc';
+    : pick(row, ['category', 'category_name', 'course', 'section', 'variety', 'dept', 'department', 'group', 'type', 'unit_type']);
+  const unitRaw = String(pick(row, ['unit', 'uom', 'measure', 'pack_type']) ?? (format?.id === 'sweets' || format?.id === 'bakery' ? 'kg' : 'pc'));
+  const unit = normalizeUnit(unitRaw, 'pc');
 
-  return {
+  const p: Product = {
     id: uid('p_'),
     name,
-    sku: String(pick(row, ['sku', 'code', 'item_code', 'product_code']) ?? 'SKU' + String(i + 1).padStart(5, '0')),
-    barcode: String(pick(row, ['barcode', 'ean', 'upc', 'gtin', 'product_id']) ?? '') || undefined,
-    category: String(catField ?? 'General').trim() || 'General',
+    sku: String(pick(row, ['sku', 'code', 'item_code', 'product_code', 'part_no', 'oem']) ?? 'SKU' + String(i + 1).padStart(5, '0')),
+    barcode: String(pick(row, ['barcode', 'ean', 'upc', 'gtin', 'product_id', 'isbn']) ?? '') || undefined,
+    category: String(catField ?? (format?.id === 'sweets' ? 'Milk Sweets' : 'General')).trim() || 'General',
     unit,
     cost,
     price: price || +(cost * (1 + o.defaultMarginPct / 100)).toFixed(2),
-    mrp: mrpRaw > price ? mrpRaw : Math.round((price || cost) * 1.1),
-    stock: numOf(pick(row, ['stock_quantity', 'stock', 'qty', 'quantity', 'available', 'on_hand']), 0),
+    mrp: mrpRaw > price ? mrpRaw : (price ? Math.round(price * 1.1) : Math.round(cost * 1.1)),
+    stock: numOf(pick(row, ['stock_kg', 'stock_quantity', 'stock', 'qty', 'quantity', 'available', 'on_hand']), 0),
     lowStock: numOf(pick(row, ['low_stock', 'reorder_level', 'min_stock']), o.defaultLowStock),
     gst: numOf(pick(row, ['gst', 'tax', 'tax_rate', 'gst_rate', 'vat']), o.defaultGst),
     hsn: pick(row, ['hsn', 'hsn_code', 'sac']) ? String(pick(row, ['hsn', 'hsn_code', 'sac'])) : undefined,
-    brand: pick(row, ['brand_name', 'brand', 'manufacturer', 'company', 'mfr']) ? String(pick(row, ['brand_name', 'brand', 'manufacturer', 'company', 'mfr'])).trim() : undefined,
+    brand: pick(row, ['brand_name', 'brand', 'manufacturer', 'company', 'mfr', 'publisher', 'vehicle_make']) ? String(pick(row, ['brand_name', 'brand', 'manufacturer', 'company', 'mfr', 'publisher', 'vehicle_make'])).trim() : undefined,
     batch: pick(row, ['batch', 'batch_no', 'lot']) ? String(pick(row, ['batch', 'batch_no', 'lot'])) : undefined,
     expiry: pick(row, ['expiry', 'expiry_date', 'exp', 'best_before']) ? String(pick(row, ['expiry', 'expiry_date', 'exp', 'best_before'])).slice(0, 10) : undefined,
     rack: pick(row, ['rack', 'shelf', 'location', 'bin']) ? String(pick(row, ['rack', 'shelf', 'location', 'bin'])) : undefined,
@@ -106,6 +127,7 @@ export function mapProduct(row: any, o: ImportOptions, i: number): Product {
     createdAt: now,
     updatedAt: now,
   };
+  return enrichProductFromFormat(p, row, format);
 }
 
 export function mapCustomer(row: any, i: number): Customer {
@@ -156,6 +178,7 @@ export async function importData(data: any, opts: ImportOptions): Promise<Import
     await logActivity('import', 'Restored full SwiftPOS backup');
     return { kind, inserted: -1, skipped: 0, message: 'Full backup restored (all modules).' };
   }
+  const format = detectCatalogFormat(data) || getCatalogFormat(useSettings.getState().systemId, useSettings.getState().shopType);
   const rows = unwrap(data);
   if (!rows.length) return { kind: 'unknown', inserted: 0, skipped: 0, message: 'No rows found in file.' };
 
@@ -182,7 +205,7 @@ export async function importData(data: any, opts: ImportOptions): Promise<Import
   const mapped: Product[] = [];
   let skipped = 0;
   rows.forEach((r: any, i: number) => {
-    const p = mapProduct(r, opts, i);
+    const p = mapProduct(r, opts, i, format);
     if (!p.name) { skipped++; return; }
     const dupId = (p.barcode && seenBarcode.get(p.barcode)) || seenName.get(p.name.toLowerCase());
     if (dupId) { p.id = dupId; }           // upsert over the duplicate
@@ -212,15 +235,6 @@ export async function importFromURL(url: string, opts: ImportOptions): Promise<I
 }
 
 export const SAMPLE_FORMATS: { id: string; title: string; note: string; sample: any }[] = [
-  {
-    id: 'products', title: 'Products / Inventory', note: 'The most common import. Only name + price are mandatory — everything else is auto-filled.',
-    sample: [{
-      product_id: 'SKU1001', product_name: 'Paracetamol 650mg Strip', brand_name: 'Cipla',
-      category: 'Tablets', unit_type: 'strip', barcode: '8901234567890',
-      price_per_unit: 32, cost: 24, mrp: 35, stock_quantity: 120,
-      gst: 12, hsn: '3004', batch: 'B2291', expiry: '2027-04-30', low_stock: 15, rack: 'R2-3',
-    }],
-  },
   {
     id: 'customers', title: 'Customers / Patients', note: 'Phone is used to de-duplicate and to send WhatsApp bills.',
     sample: [{ name: 'Aarav Sharma', phone: '9810000001', email: 'aarav@mail.com', address: 'Delhi', points: 120, credit: 0, gstin: '' }],

@@ -25,6 +25,8 @@ import CustomerPicker from '@/components/pos/CustomerPicker';
 import SystemFields from '@/components/pos/SystemFields';
 import { useBillMeta } from '@/store/billMeta';
 import Scanner from '@/components/pos/Scanner';
+import WeightPicker from '@/components/pos/WeightPicker';
+import { needsWeightPopup, weightPresets } from '@/lib/weight';
 import type { Product, Sale } from '@/db/types';
 
 const CHANNELS = [
@@ -41,7 +43,7 @@ export default function POS() {
   const customers = useCustomers() || [];
   const cart = useCart();
   const s = useSettings();
-  const { terms, modules, system } = useShop();
+  const { terms, modules, system, profile } = useShop();
   const billMeta = useBillMeta();
   const session = useSession();
 
@@ -60,6 +62,7 @@ export default function POS() {
   const [chargeOpen, setChargeOpen] = useState(false);
   const [lineEdit, setLineEdit] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Sale | null>(null);
+  const [weigh, setWeigh] = useState<Product | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const dq = useDebounced(q, 100);
   const scanBuf = useRef({ text: '', t: 0 });
@@ -116,18 +119,34 @@ export default function POS() {
       buzz('warning');
       return toast(`${p.name} is out of stock`, 'err');
     }
+    if (needsWeightPopup(system.id, profile.id, p.unit)) {
+      setWeigh(p);
+      clickSound();
+      return;
+    }
     cart.add(p);
     session.pushRecent(p.id);
     clickSound();
     buzz('light');
   };
 
+  const confirmWeight = (qty: number) => {
+    if (!weigh || !(qty > 0)) return;
+    cart.add(weigh, qty);
+    session.pushRecent(weigh.id);
+    clickSound();
+    buzz('light');
+    toast(`Added ${weigh.name}`);
+    setWeigh(null);
+  };
+
   const onScan = (code: string) => {
     const p = products.find((x: Product) => x.barcode === code || x.sku === code);
     if (p) {
+      const askWeight = needsWeightPopup(system.id, profile.id, p.unit);
       addProduct(p);
       beep();
-      toast(`Added: ${p.name}`);
+      if (!askWeight) toast(`Added: ${p.name}`);
     } else {
       errorSound();
       buzz('warning');
@@ -611,6 +630,7 @@ export default function POS() {
       <ReceiptModal sale={receipt} onClose={() => setReceipt(null)} />
       <CustomerPicker open={custOpen} onClose={() => setCustOpen(false)} />
       <Scanner open={scanOpen} onClose={() => setScanOpen(false)} onScan={onScan} />
+      <WeightPicker product={weigh} onClose={() => setWeigh(null)} onConfirm={confirmWeight} />
       <LineEditor lineId={lineEdit} onClose={() => setLineEdit(null)} kitchenNote={modules.kitchenNote} />
       <DiscountModal
         open={discOpen}
@@ -768,6 +788,7 @@ function LineEditor({
   const s = useSettings();
   const line = cart.lines.find((l) => l.id === lineId);
   if (!line) return null;
+  const presets = weightPresets(line.unit);
 
   return (
     <Modal
@@ -799,6 +820,13 @@ function LineEditor({
             onChange={(e) => cart.setQty(line.id, parseFloat(e.target.value) || 0)}
           />
         </Field>
+        {presets.length > 0 && (
+          <div className="col-span-2 -mt-1 flex flex-wrap gap-1.5">
+            {presets.map((p) => (
+              <button key={p.id} className="chip" onClick={() => cart.setQty(line.id, p.qty)}>{p.label}</button>
+            ))}
+          </div>
+        )}
         <Field label="Unit Price">
           <Input
             inputMode="decimal"

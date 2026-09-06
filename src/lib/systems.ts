@@ -1,11 +1,11 @@
-/** Ten complete business systems.
+/** Complete business systems.
  *  Choosing a system re-wires the whole app: screens, wording, POS capture fields,
  *  billing defaults, dashboard focus and workflow — not just the shop name. */
 import type { ShopTypeId } from './shopProfiles';
 
 export type SystemId =
   | 'rms' | 'pharmacy' | 'kirana' | 'retail' | 'electronics'
-  | 'salon' | 'hardware' | 'bakery' | 'cafe' | 'garage';
+  | 'salon' | 'hardware' | 'bakery' | 'sweets' | 'cafe' | 'garage';
 
 export type CapKey =
   | 'tables' | 'kot' | 'token' | 'courses' | 'modifiers' | 'delivery'
@@ -219,8 +219,8 @@ export const SYSTEMS: BusinessSystem[] = [
     ],
   },
   {
-    id: 'bakery', base: 'bakery', label: 'Bakery / Sweet Shop System', short: 'Bakery', emoji: '🧁',
-    blurb: 'Weight billing, production batches, custom cake orders, festival pre-booking.',
+    id: 'bakery', base: 'bakery', label: 'Bakery / Cake Shop System', short: 'Bakery', emoji: '🧁',
+    blurb: 'Cakes, pastries and breads — per-kg cakes, custom messages, production batches.',
     accent: 'rose',
     caps: ['weighScale', 'looseItems', 'batchExpiry', 'recipes', 'production', 'delivery', 'variants', 'loyalty'],
     screens: [...COMMON, '/orders', '/recipes', '/menu', '/subscriptions'],
@@ -239,6 +239,29 @@ export const SYSTEMS: BusinessSystem[] = [
       'Production batches from recipes with raw-material deduction',
       'Short shelf-life expiry alerts (default 7 days)',
       'Festival pre-booking list with a pickup schedule',
+    ],
+  },
+  {
+    id: 'sweets', base: 'sweets', label: 'Sweets / Mithai Shop System', short: 'Sweets / Mithai', emoji: '🍬',
+    blurb: 'Per-kg mithai billing, 250g / 500g / 750g / 1kg packs, festival boxes, short shelf-life.',
+    accent: 'rose',
+    caps: ['weighScale', 'looseItems', 'batchExpiry', 'recipes', 'production', 'delivery', 'variants', 'loyalty'],
+    screens: [...COMMON, '/orders', '/recipes', '/menu', '/subscriptions'],
+    home: ['/pos', '/orders', '/recipes', '/menu'],
+    capture: [
+      { key: 'orderFor', label: 'Pickup / delivery date', type: 'date', scope: 'bill', printOnBill: true },
+      { key: 'boxType', label: 'Box / packing', type: 'select', scope: 'bill', options: ['Loose', 'Plain box', 'Gift box', 'Premium', 'Tray'] },
+      { key: 'weight', label: 'Weight (kg)', type: 'number', scope: 'line' },
+    ],
+    defaults: { defaultGst: 5, posLayout: 'grid', expiryAlertDays: 5, taxInclusive: true, packagingCharge: 20, quickCash: [50, 100, 200, 500, 1000] },
+    workflow: ['Mithai tap', '250g / 500g / 750g / 1kg ya custom wazan', 'Gift box choose', 'Festival pre-order', 'UPI / cash', 'Pickup slip'],
+    highlights: [
+      'Tap a mithai and pick 250 gram, 500 gram, 750 gram, 1 kg — or type any custom weight',
+      'Price is always per kg; pack buttons convert grams automatically',
+      'Festival pre-booking with pickup date printed on the token',
+      'Gift-box / tray packing charge on the bill',
+      'Short shelf-life expiry alerts (default 5 days)',
+      'Namkeen and dry-fruit mix billed the same loose-weight way',
     ],
   },
   {
@@ -289,6 +312,22 @@ export const SYSTEMS: BusinessSystem[] = [
     ],
   },
 ];
+
+/** Welcome / switcher order — Sweets + Restaurant sit at the top so they are not missed. */
+export const SYSTEM_PICKER_ORDER: SystemId[] = [
+  'rms', 'sweets', 'kirana', 'pharmacy', 'bakery', 'cafe', 'retail', 'electronics', 'salon', 'hardware', 'garage',
+];
+
+export const systemsForPicker = (): BusinessSystem[] => {
+  const seen = new Set<string>();
+  const ordered: BusinessSystem[] = [];
+  for (const id of SYSTEM_PICKER_ORDER) {
+    const sys = SYSTEMS.find((s) => s.id === id);
+    if (sys) { ordered.push(sys); seen.add(sys.id); }
+  }
+  for (const sys of SYSTEMS) if (!seen.has(sys.id)) ordered.push(sys);
+  return ordered;
+};
 
 export const getSystem = (id?: string): BusinessSystem =>
   SYSTEMS.find((x) => x.id === id) ?? SYSTEMS[0];
