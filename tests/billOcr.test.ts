@@ -127,6 +127,7 @@ describe('parsedToSettings', () => {
       website: 'www.kalighata.com',
       gstin: '07AAECK2795F1ZE',
       fssai: '13319006000144',
+      cinNo: 'U15419DL2010PTC209840',
     });
   });
 });

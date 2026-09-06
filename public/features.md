@@ -157,7 +157,7 @@
 
 # v7.1 — "Next level" additions (features 136 → 212)
 
-## Bill templates (20 built-in + unlimited custom)
+## Bill templates (21 built-in + unlimited custom)
 136. **Classic Thermal (80mm)** — the everyday receipt
 137. **Compact 58mm** — paper-saving mini roll
 138. **Detailed Tax Thermal** — per-item HSN, GST%, taxable value
@@ -165,6 +165,7 @@
 140. **Bold Header** — inverted black shop banner
 141. **Restaurant Bill** — table, channel, service charge, tip line
 142. **Pharmacy Rx Bill** — drug licence, patient, pharmacist signature
+142a. **Mithai / Halwai 80mm** — Kali Ghata-style sweets bill: CIN + FSSAI header, 3-decimal kg qty, HSN per item, rate-wise GST summary, tender/balance, big Token No.
 143. **Token / Queue Slip** — giant order number for pickup counters
 144. **Gift Receipt** — items without prices
 145. **Duplicate Copy** — CUSTOMER / MERCHANT watermark strip

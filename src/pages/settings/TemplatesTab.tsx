@@ -36,9 +36,10 @@ export default function TemplatesTab() {
     if (u) qrDataUrl(upiLink(u, 549), 240).then(setQr).catch(() => setQr(''));
   }, [s.upiAccounts]);
 
-  const sample = useMemo(() => sampleSale(), []);
+  const sample = useMemo(() => sampleSale(s.systemId === 'sweets' ? 'sweets' : 'grocery'), [s.systemId]);
+  const sampleMithai = useMemo(() => sampleSale('sweets'), []);
   const html = (t: TemplateDef) => renderTemplate(t.html, {
-    ...buildContext(sample, s as any, { upiQr: qr, upiId: s.upiAccounts.find((u) => u.isDefault)?.vpa ?? 'shop@upi', copyLabel: s.duplicateLabel, logo: s.logoDataUrl }),
+    ...buildContext(t.id === 'thermal-mithai' ? sampleMithai : sample, s as any, { upiQr: qr, upiId: s.upiAccounts.find((u) => u.isDefault)?.vpa ?? 'shop@upi', copyLabel: s.duplicateLabel, logo: s.logoDataUrl }),
     margin: s.printMargin,
   });
 
