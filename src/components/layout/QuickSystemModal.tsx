@@ -25,7 +25,7 @@ export default function QuickSystemModal({ open, onClose }: { open: boolean; onC
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Switch Business Edition (10 Systems)" wide>
+    <Modal open={open} onClose={onClose} title={`Switch Business Edition (${SYSTEMS.length} Systems)`} wide>
       <div className="space-y-4">
         <p className="text-xs text-ink3">
           Select any business system below. The whole POS interface, billing fields, receipts, navigation screens, and terminology will dynamically transform for that industry.

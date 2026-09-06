@@ -3,8 +3,11 @@ import { SYSTEMS, getSystem, screenAllowed } from '../src/lib/systems';
 import { SHOP_PROFILES, getProfile } from '../src/lib/shopProfiles';
 
 describe('business systems', () => {
-  it('ships exactly ten complete systems', () => {
-    expect(SYSTEMS.length).toBe(10);
+  it('ships a complete set of business systems including sweets', () => {
+    expect(SYSTEMS.length).toBeGreaterThanOrEqual(11);
+    expect(SYSTEMS.map((s) => s.id)).toContain('sweets');
+    expect(SYSTEMS.map((s) => s.id)).toContain('rms');
+    expect(SHOP_PROFILES.map((p) => p.id)).toContain('sweets');
   });
 
   it('has unique ids and labels', () => {
@@ -53,6 +56,8 @@ describe('business systems', () => {
     expect(getSystem('electronics').capture.find((f) => f.key === 'imei')?.required).toBe(true);
     expect(getSystem('garage').capture.find((f) => f.key === 'vehicleNo')?.required).toBe(true);
     expect(getSystem('cafe').capture.some((f) => f.key === 'token')).toBe(true);
+    expect(getSystem('sweets').caps).toContain('weighScale');
+    expect(getSystem('sweets').base).toBe('sweets');
   });
 
   it('falls back to the first system for an unknown id', () => {

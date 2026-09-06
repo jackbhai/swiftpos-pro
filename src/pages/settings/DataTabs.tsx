@@ -15,6 +15,7 @@ import {
   importText, importFromURL, defaultImportOptions, SAMPLE_FORMATS, detectKind, unwrap,
   type ImportOptions,
 } from '@/lib/importer';
+import { SHOP_CATALOG_FORMATS, exportCatalog, getCatalogFormat } from '@/lib/shopFormats';
 
 /* ─────────────────────────── SHOP TYPE ─────────────────────────── */
 
@@ -167,7 +168,7 @@ export function JsonTab() {
   return (
     <div className="space-y-3">
       <Card>
-        <SectionTitle title="Import data" sub="JSON or CSV — products, customers, vendors or a full SwiftPOS backup. Fields are auto-detected." />
+        <SectionTitle title="Import data" sub="JSON or CSV — har shop type ka apna catalogue format hai. File auto-detect ho jaati hai." />
         <div className="grid gap-2 sm:grid-cols-4">
           {[['Products', counts.products], ['Customers', counts.customers], [
             'Sales', counts.sales], ['Vendors', counts.vendors]].map(([l, v]) => (
@@ -215,7 +216,7 @@ export function JsonTab() {
         </div>
 
         <p className="label mt-3">Or paste JSON / CSV here</p>
-        <Textarea className="min-h-[130px] font-mono text-[11px]" value={text} placeholder='[{"product_name":"Paracetamol 650","price_per_unit":32,"stock_quantity":50}]'
+        <Textarea className="min-h-[130px] font-mono text-[11px]" value={text} placeholder='Shop-specific JSON paste kijiye — Settings ke neeche format dekhiye'
           onChange={(e) => { setText(e.target.value); analyse(e.target.value); }} />
 
         {preview && (
@@ -260,8 +261,10 @@ export function JsonTab() {
         <UrlImport onRun={(url) => runImport(() => importFromURL(url, withProgress()), 'url')} busy={!!busy} />
       </Card>
 
+      <ShopFormatCard copied={copied} setCopied={setCopied} onLoad={(t) => { setText(t); analyse(t); }} />
+
       <Card>
-        <SectionTitle title="Accepted JSON formats" sub="Copy a template, fill it with your data, import. Unknown fields are ignored; missing ones are auto-filled." />
+        <SectionTitle title="Customers, vendors & full backup" sub="Ye formats har shop type ke liye same rehte hain." />
         <div className="space-y-3">
           {SAMPLE_FORMATS.map((f) => (
             <div key={f.id} className="rounded-xl border border-line">
@@ -280,19 +283,62 @@ export function JsonTab() {
             </div>
           ))}
         </div>
-        <div className="mt-3 rounded-xl border border-line bg-surface2/50 p-3 text-[11px] leading-relaxed text-ink3">
-          <p className="mb-1 font-bold text-ink2">Field aliases understood automatically</p>
-          <p><b>Name:</b> product_name · item_name · name · title · medicine_name · dish</p>
-          <p><b>Price:</b> price_per_unit · selling_price · price · rate · mrp</p>
-          <p><b>Cost:</b> cost · cost_price · purchase_price · wholesale_price</p>
-          <p><b>Stock:</b> stock_quantity · stock · qty · quantity · on_hand</p>
-          <p><b>Barcode:</b> barcode · ean · upc · gtin · product_id</p>
-          <p><b>Category:</b> category · department · group · unit_type</p>
-          <p><b>Brand:</b> brand_name · brand · manufacturer · company</p>
-          <p><b>Others:</b> gst · hsn · batch · expiry · rack · low_stock · unit</p>
-        </div>
       </Card>
     </div>
+  );
+}
+
+function ShopFormatCard({ copied, setCopied, onLoad }: { copied: string; setCopied: (v: string) => void; onLoad: (t: string) => void }) {
+  const s = useSettings();
+  const active = getCatalogFormat(s.systemId, s.shopType);
+  const [viewId, setViewId] = useState(active.id);
+  const fmt = SHOP_CATALOG_FORMATS.find((f) => f.id === viewId) ?? active;
+  const wrapped = { app: 'SwiftPOS Pro', format: fmt.formatVersion, shop_type: fmt.id, [fmt.wrapKey]: fmt.sample };
+
+  const exportLive = async () => {
+    const products = await db.products.toArray();
+    const payload = exportCatalog(products, { systemId: s.systemId, shopType: s.shopType, shopName: s.shopName });
+    download(`swiftpos-${s.systemId}-catalog.json`, JSON.stringify(payload, null, 2), 'application/json');
+    toast(`${products.length} items exported · ${active.emoji} ${active.title}`);
+  };
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Shop-wise JSON catalogue format"
+        sub="Har tarah ki dukaan ka import/export alag hai — kirana, pharmacy, mithai, restaurant, cafe…"
+      />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button className="btn-primary" onClick={exportLive}><Download size={15} /> Export my catalogue ({active.emoji} {active.id})</button>
+      </div>
+      <div className="no-scrollbar mb-3 flex gap-1.5 overflow-x-auto pb-1">
+        {SHOP_CATALOG_FORMATS.map((f) => (
+          <button key={f.id} onClick={() => setViewId(f.id)}
+            className={cx('chip', viewId === f.id && 'chip-on')}>
+            {f.emoji} {f.id}{f.id === active.id ? ' · yours' : ''}
+          </button>
+        ))}
+      </div>
+      <div className="rounded-xl border border-line">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
+          <p className="flex-1 text-sm font-bold text-ink">{fmt.emoji} {fmt.title}</p>
+          <Badge tone="brand">{fmt.formatVersion}</Badge>
+          <button className="btn-ghost px-2 py-1 text-xs" onClick={() => { navigator.clipboard.writeText(JSON.stringify(wrapped, null, 2)); setCopied(fmt.id); setTimeout(() => setCopied(''), 1500); }}>
+            {copied === fmt.id ? <Check size={13} /> : <Copy size={13} />} Copy
+          </button>
+          <button className="btn-ghost px-2 py-1 text-xs" onClick={() => download(`swiftpos-${fmt.id}-template.json`, JSON.stringify(wrapped, null, 2), 'application/json')}>
+            <Download size={13} /> Template
+          </button>
+          <button className="btn-soft px-2 py-1 text-xs" onClick={() => onLoad(JSON.stringify(wrapped, null, 2))}>Load into editor</button>
+        </div>
+        <p className="px-3 pt-2 text-[11px] text-ink3">{fmt.note}</p>
+        <p className="px-3 pt-1 text-[11px] text-ink2">
+          Wrap key <b className="text-ink">{fmt.wrapKey}</b> · fields:{' '}
+          {fmt.fields.map((f) => f.key + (f.required ? '*' : '')).join(' · ')}
+        </p>
+        <pre className="max-h-72 overflow-auto p-3 font-mono text-[10.5px] leading-relaxed text-ink2">{JSON.stringify(wrapped, null, 2)}</pre>
+      </div>
+    </Card>
   );
 }
 

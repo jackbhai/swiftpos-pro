@@ -2,6 +2,12 @@
 
 All notable changes to SwiftPOS Pro. Dates are IST.
 
+## [14.1.0] — 2026-09-06 · Shop-wise catalogues, sweets shop, weight picker
+### Added
+- **Sweets / Mithai shop type + business system** — per-kg mithai billing, festival boxes, short shelf-life. Restaurant RMS remains its own system.
+- **Shop-specific JSON import/export** — kirana, pharmacy, restaurant, cafe, bakery, sweets, retail, electronics, fashion, salon, hardware, stationery and garage each have their own catalogue wrap-key, field names and template (e.g. `mithai[]` + `price_per_kg`, `medicines[]` + batch/expiry, `menu[]` + half/full).
+- **Kirana & sweets weight popup** — tapping a kg / litre item opens 250 gram, 500 gram, 750 gram, 1 kg (or ml / litre) presets plus a custom weight field.
+
 ## [14.0.0] — 2026-08-29 · Ultra UI Polish & PWA Hardening
 ### Added
 - **Ultra-Grade AMOLED & Cyber UI Design**: Deep black `#000000` surface, glassmorphism card elevation, glowing active borders, glowing status badges, and silky smooth transitions across mobile, tablet, and desktop.

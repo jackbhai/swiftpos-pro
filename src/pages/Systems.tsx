@@ -19,7 +19,7 @@ const CAP_LABEL: Record<string, string> = {
   recipes: 'Recipe / BOM', production: 'Production batches', subscriptions: 'Subscriptions', loyalty: 'Loyalty points',
 };
 
-/** Business systems — 10 complete, ready-made setups. Pick one and the whole app changes. */
+/** Business systems — ready-made setups. Pick one and the whole app changes. */
 export default function Systems() {
   const s = useSettings();
   const { system, capList } = useShop();
@@ -45,7 +45,7 @@ export default function Systems() {
       </div>
 
       <Card>
-        <SectionTitle title="Business systems" sub="Ek app, 10 poore systems — jo chuniye, UI aur features usi business ke hisaab se ho jate hain" />
+        <SectionTitle title="Business systems" sub={`Ek app, ${SYSTEMS.length} poore systems — jo chuniye, UI aur features usi business ke hisaab se ho jate hain`} />
         <Tabs active={tab} onChange={(t) => setTab(t as any)} tabs={[
           { id: 'systems', label: 'Choose system', count: SYSTEMS.length },
           { id: 'modules', label: 'Fine-tune modules', count: capList.size },

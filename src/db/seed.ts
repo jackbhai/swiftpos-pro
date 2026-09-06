@@ -8,13 +8,13 @@ const CAT: Record<string, string> = {
 
 export const CATEGORY_EMOJI = CAT;
 
-const RAW: [string, string, number, number, number, number][] = [
-  ['Basmati Rice 1kg', 'Grocery', 82, 115, 40, 5],
-  ['Toor Dal 1kg', 'Grocery', 118, 152, 26, 5],
-  ['Sunflower Oil 1L', 'Grocery', 121, 149, 32, 5],
-  ['Wheat Atta 5kg', 'Grocery', 210, 265, 18, 5],
-  ['Sugar 1kg', 'Grocery', 41, 52, 55, 5],
-  ['Iodized Salt 1kg', 'Grocery', 18, 26, 70, 5],
+const RAW: [string, string, number, number, number, number, string?][] = [
+  ['Basmati Rice', 'Grocery', 82, 115, 40, 5, 'kg'],
+  ['Toor Dal', 'Grocery', 118, 152, 26, 5, 'kg'],
+  ['Sunflower Oil', 'Grocery', 121, 149, 32, 5, 'l'],
+  ['Wheat Atta', 'Grocery', 42, 53, 18, 5, 'kg'],
+  ['Sugar', 'Grocery', 41, 52, 55, 5, 'kg'],
+  ['Iodized Salt', 'Grocery', 18, 26, 70, 5, 'kg'],
   ['Tea Powder 500g', 'Beverages', 195, 260, 22, 5],
   ['Instant Coffee 100g', 'Beverages', 240, 315, 14, 18],
   ['Cola 750ml', 'Beverages', 30, 45, 60, 28],
@@ -68,10 +68,10 @@ export async function seedIfEmpty(force = false) {
   const vendors: Vendor[] = ['Metro Wholesale', 'FreshLine Distributors', 'DailyMart Supply', 'ElectroHub Traders']
     .map((name, i) => ({ id: uid('v_'), name, phone: `98${10000000 + i * 4321}`, gstin: `07AAACS${1000 + i}A1Z${i}`, payable: 0, address: 'Delhi, IN', createdAt: now }));
 
-  const products: Product[] = RAW.map(([name, category, cost, price, stock, gst], i) => ({
+  const products: Product[] = RAW.map(([name, category, cost, price, stock, gst, unit], i) => ({
     id: uid('p_'), name, sku: 'SKU' + String(1001 + i),
     barcode: '890' + String(1000000000 + i * 7919).slice(0, 10),
-    category, unit: 'pc', cost, price, mrp: Math.round(price * 1.12), stock,
+    category, unit: unit || 'pc', cost, price, mrp: Math.round(price * 1.12), stock,
     lowStock: 10, gst, hsn: String(1000 + rnd(8999)),
     vendorId: vendors[i % vendors.length].id, brand: ['Fresho', 'DailyGood', 'Nova', 'Prime'][i % 4],
     favorite: i % 9 === 0, active: true, trackStock: true,
