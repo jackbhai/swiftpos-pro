@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Boxes, Check, Sparkles, ListChecks, Workflow, Layers, ArrowRight } from 'lucide-react';
-import { SYSTEMS, getSystem, type CapKey } from '@/lib/systems';
+import { SYSTEMS, getSystem, systemsForPicker, type CapKey } from '@/lib/systems';
 import { useSettings, useShop } from '@/store/settings';
 import { NAV } from '@/components/layout/nav';
 import { Card, Stat, Badge, Toggle, SectionTitle, Tabs, Modal } from '@/components/ui';
@@ -54,7 +54,7 @@ export default function Systems() {
 
       {tab === 'systems' && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {SYSTEMS.map((sys) => {
+          {systemsForPicker().map((sys) => {
             const active = system.id === sys.id;
             return (
               <Card key={sys.id} className={cx(active && 'border-brand ring-1 ring-brand')}>

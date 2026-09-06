@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SYSTEMS, getSystem, screenAllowed } from '../src/lib/systems';
+import { SYSTEMS, getSystem, screenAllowed, systemsForPicker } from '../src/lib/systems';
 import { SHOP_PROFILES, getProfile } from '../src/lib/shopProfiles';
 
 describe('business systems', () => {
@@ -8,6 +8,13 @@ describe('business systems', () => {
     expect(SYSTEMS.map((s) => s.id)).toContain('sweets');
     expect(SYSTEMS.map((s) => s.id)).toContain('rms');
     expect(SHOP_PROFILES.map((p) => p.id)).toContain('sweets');
+  });
+
+  it('puts Sweets / Mithai near the top of the picker, separate from Bakery', () => {
+    const picker = systemsForPicker();
+    expect(picker.find((s) => s.id === 'sweets')?.short).toMatch(/Mithai/i);
+    expect(picker.findIndex((s) => s.id === 'sweets')).toBeLessThan(3);
+    expect(picker.find((s) => s.id === 'bakery')?.label).not.toMatch(/Sweet Shop/i);
   });
 
   it('has unique ids and labels', () => {

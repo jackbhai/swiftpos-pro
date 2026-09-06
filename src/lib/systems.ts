@@ -219,8 +219,8 @@ export const SYSTEMS: BusinessSystem[] = [
     ],
   },
   {
-    id: 'bakery', base: 'bakery', label: 'Bakery / Sweet Shop System', short: 'Bakery', emoji: '🧁',
-    blurb: 'Weight billing, production batches, custom cake orders, festival pre-booking.',
+    id: 'bakery', base: 'bakery', label: 'Bakery / Cake Shop System', short: 'Bakery', emoji: '🧁',
+    blurb: 'Cakes, pastries and breads — per-kg cakes, custom messages, production batches.',
     accent: 'rose',
     caps: ['weighScale', 'looseItems', 'batchExpiry', 'recipes', 'production', 'delivery', 'variants', 'loyalty'],
     screens: [...COMMON, '/orders', '/recipes', '/menu', '/subscriptions'],
@@ -242,7 +242,7 @@ export const SYSTEMS: BusinessSystem[] = [
     ],
   },
   {
-    id: 'sweets', base: 'sweets', label: 'Sweets / Mithai Shop System', short: 'Sweets', emoji: '🍬',
+    id: 'sweets', base: 'sweets', label: 'Sweets / Mithai Shop System', short: 'Sweets / Mithai', emoji: '🍬',
     blurb: 'Per-kg mithai billing, 250g / 500g / 750g / 1kg packs, festival boxes, short shelf-life.',
     accent: 'rose',
     caps: ['weighScale', 'looseItems', 'batchExpiry', 'recipes', 'production', 'delivery', 'variants', 'loyalty'],
@@ -312,6 +312,22 @@ export const SYSTEMS: BusinessSystem[] = [
     ],
   },
 ];
+
+/** Welcome / switcher order — Sweets + Restaurant sit at the top so they are not missed. */
+export const SYSTEM_PICKER_ORDER: SystemId[] = [
+  'rms', 'sweets', 'kirana', 'pharmacy', 'bakery', 'cafe', 'retail', 'electronics', 'salon', 'hardware', 'garage',
+];
+
+export const systemsForPicker = (): BusinessSystem[] => {
+  const seen = new Set<string>();
+  const ordered: BusinessSystem[] = [];
+  for (const id of SYSTEM_PICKER_ORDER) {
+    const sys = SYSTEMS.find((s) => s.id === id);
+    if (sys) { ordered.push(sys); seen.add(sys.id); }
+  }
+  for (const sys of SYSTEMS) if (!seen.has(sys.id)) ordered.push(sys);
+  return ordered;
+};
 
 export const getSystem = (id?: string): BusinessSystem =>
   SYSTEMS.find((x) => x.id === id) ?? SYSTEMS[0];

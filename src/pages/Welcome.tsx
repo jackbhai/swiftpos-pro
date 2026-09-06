@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Rocket, Store, Boxes, Database, Wallet, ShieldCheck, Check, ArrowRight, ArrowLeft, Sparkles, Upload,
 } from 'lucide-react';
-import { SYSTEMS } from '@/lib/systems';
+import { systemsForPicker } from '@/lib/systems';
 import { useSettings } from '@/store/settings';
 import { db } from '@/db/db';
 import { importText, defaultImportOptions } from '@/lib/importer';
@@ -106,12 +106,15 @@ export default function Welcome() {
 
       {step === 1 && (
         <Card>
-          <StepHead icon={<Boxes size={16} />} title="Business system chuniye" sub="Poora app isi ke hisaab se set ho jaega" />
+          <StepHead icon={<Boxes size={16} />} title="Business system chuniye" sub="Sweets / Mithai Bakery se alag hai — list ke upar dekhiye" />
           <div className="grid gap-2 sm:grid-cols-2">
-            {SYSTEMS.map((sys) => (
+            {systemsForPicker().map((sys) => (
               <button key={sys.id} onClick={() => setSystemId(sys.id)}
                 className={cx('rounded-2xl border p-3 text-left transition', systemId === sys.id ? 'border-brand bg-brand/10' : 'border-line hover:border-brand/40')}>
-                <p className="text-sm font-bold text-ink">{sys.emoji} {sys.short}</p>
+                <div className="flex items-center gap-2">
+                  <p className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{sys.emoji} {sys.short}</p>
+                  {sys.id === 'sweets' && <Badge tone="brand">naya</Badge>}
+                </div>
                 <p className="text-[11px] text-ink3">{sys.blurb}</p>
               </button>
             ))}

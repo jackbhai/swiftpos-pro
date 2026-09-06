@@ -1,5 +1,5 @@
 import React from 'react';
-import { SYSTEMS, getSystem } from '@/lib/systems';
+import { SYSTEMS, getSystem, systemsForPicker } from '@/lib/systems';
 import { useSettings, useShop } from '@/store/settings';
 import { Modal, Badge } from '@/components/ui';
 import { cx } from '@/lib/format';
@@ -32,7 +32,7 @@ export default function QuickSystemModal({ open, onClose }: { open: boolean; onC
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {SYSTEMS.map((sys) => {
+          {systemsForPicker().map((sys) => {
             const active = system.id === sys.id;
             return (
               <div
